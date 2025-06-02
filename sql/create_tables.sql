@@ -1,58 +1,59 @@
--- Bảng Người Dùng (NguoiDung)
+-- Tạo bảng người dùng
 CREATE TABLE NguoiDung (
     MaND VARCHAR2(10) PRIMARY KEY,
-    TenDangNhap VARCHAR2(50) UNIQUE NOT NULL,
-    MatKhau VARCHAR2(255) NOT NULL,
-    HoTen NVARCHAR2(100) NOT NULL,
-    Email VARCHAR2(100),
-    SoDienThoai VARCHAR2(20),
-    VaiTro VARCHAR2(20) DEFAULT 'khachhang' CHECK (VaiTro IN ('admin', 'nhanvien', 'khachhang'))
+    TenDangNhap VARCHAR2(30) UNIQUE NOT NULL,
+    MatKhau VARCHAR2(100) NOT NULL,
+    HoTen VARCHAR2(50) NOT NULL,
+    VaiTro VARCHAR2(20) CHECK (VaiTro IN ('admin', 'nhanvien', 'khachhang'))
 );
 
--- Bảng Phim
+-- Bảng phim
 CREATE TABLE Phim (
     MaPhim VARCHAR2(10) PRIMARY KEY,
-    TenPhim NVARCHAR2(150) NOT NULL,
-    TheLoai NVARCHAR2(50),
-    ThoiLuong NUMBER NOT NULL, -- phút
+    TenPhim VARCHAR2(100) NOT NULL,
+    TheLoai VARCHAR2(50),
+    ThoiLuong NUMBER(3) CHECK (ThoiLuong > 0),
     MoTa CLOB,
-    Poster VARCHAR2(255),
-    TrangThai VARCHAR2(20) DEFAULT 'dang_chieu' CHECK (TrangThai IN ('dang_chieu', 'sap_chieu', 'ngung_chieu'))
+    TrangThai VARCHAR2(20) CHECK (TrangThai IN ('dang_chieu', 'sap_chieu', 'ngung_chieu'))
 );
 
--- Bảng Phòng Chiếu
+-- Bảng phòng chiếu
 CREATE TABLE PhongChieu (
     MaPhong VARCHAR2(10) PRIMARY KEY,
-    TenPhong NVARCHAR2(50) NOT NULL,
-    SoLuongGhe NUMBER NOT NULL
+    TenPhong VARCHAR2(30) UNIQUE NOT NULL,
+    SoLuongGhe NUMBER(3) CHECK (SoLuongGhe > 0)
 );
 
--- Bảng Ghế
+-- Bảng ghế
 CREATE TABLE Ghe (
     MaGhe VARCHAR2(10) PRIMARY KEY,
-    MaPhong VARCHAR2(10) NOT NULL REFERENCES PhongChieu(MaPhong),
-    Hang VARCHAR2(5) NOT NULL,
-    So NUMBER NOT NULL,
-    LoaiGhe VARCHAR2(10) DEFAULT 'thuong' CHECK (LoaiGhe IN ('thuong', 'vip')),
-    TrangThai VARCHAR2(10) DEFAULT 'tot' CHECK (TrangThai IN ('tot', 'hong'))
+    MaPhong VARCHAR2(10),
+    SoGhe VARCHAR2(5) NOT NULL,
+    LoaiGhe VARCHAR2(20) CHECK (LoaiGhe IN ('thuong', 'vip')),
+    FOREIGN KEY (MaPhong) REFERENCES PhongChieu(MaPhong)
 );
 
--- Bảng Suất Chiếu
+-- Bảng suất chiếu
 CREATE TABLE SuatChieu (
     MaSuat VARCHAR2(10) PRIMARY KEY,
-    MaPhim VARCHAR2(10) NOT NULL REFERENCES Phim(MaPhim),
-    MaPhong VARCHAR2(10) NOT NULL REFERENCES PhongChieu(MaPhong),
-    ThoiGianBatDau TIMESTAMP NOT NULL,
-    ThoiGianKetThuc TIMESTAMP NOT NULL,
-    GiaVe NUMBER NOT NULL
+    MaPhim VARCHAR2(10),
+    MaPhong VARCHAR2(10),
+    ThoiGianBatDau DATE NOT NULL,
+    ThoiGianKetThuc DATE NOT NULL,
+    GiaVe NUMBER(8,0) CHECK (GiaVe > 0),
+    FOREIGN KEY (MaPhim) REFERENCES Phim(MaPhim),
+    FOREIGN KEY (MaPhong) REFERENCES PhongChieu(MaPhong)
 );
 
--- Bảng Vé
+-- Bảng vé
 CREATE TABLE Ve (
-    MaVe VARCHAR2(15) PRIMARY KEY,
-    MaSuat VARCHAR2(10) NOT NULL REFERENCES SuatChieu(MaSuat),
-    MaND VARCHAR2(10) NOT NULL REFERENCES NguoiDung(MaND),
-    MaGhe VARCHAR2(10) NOT NULL REFERENCES Ghe(MaGhe),
+    MaVe VARCHAR2(10) PRIMARY KEY,
+    MaSuat VARCHAR2(10),
+    MaGhe VARCHAR2(10),
+    MaNguoiDung VARCHAR2(10),
+    ThoiGianDat DATE DEFAULT SYSDATE,
     TrangThai VARCHAR2(20) DEFAULT 'da_dat' CHECK (TrangThai IN ('da_dat', 'da_kiem_tra', 'huy')),
-    ThoiGianDat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    FOREIGN KEY (MaSuat) REFERENCES SuatChieu(MaSuat),
+    FOREIGN KEY (MaGhe) REFERENCES Ghe(MaGhe),
+    FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung(MaND)
 );
