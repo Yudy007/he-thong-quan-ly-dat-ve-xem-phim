@@ -1,4 +1,4 @@
--- Tạo USER sử dụng TABLESPACE mặc định (USERS)
+-- Tạo USER sử dụng TABLESPACE mặc định
 CREATE USER qlvexemphim IDENTIFIED BY phim123;
 
 -- Gán quyền cho user mới
