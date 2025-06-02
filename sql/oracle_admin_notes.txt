@@ -1,0 +1,22 @@
+### HƯỚNG DẪN SETUP ORACLE CHO NHÓM ###
+
+1. Mở Oracle SQL Developer.
+2. Kết nối bằng user SYSTEM.
+3. File > Open > Mở file: sql\tablespace_setup.sql → Nhấn F5 để tạo user qlvexemphim/phim123.
+
+4. Tạo kết nối mới:
+   - Username: qlvexemphim
+   - Password: phim123
+   - SID: ORCL
+
+5. Sau khi kết nối được:
+   - Mở và chạy file: sql\create_tables.sql
+   - Sau đó: sql\sample_data.sql
+
+6. Test dữ liệu:
+   SELECT * FROM NguoiDung;
+   SELECT * FROM Ve;
+
+### Reset nhanh: ###
+- Nếu user lỗi: dùng SYSTEM chạy → DROP USER qlvexemphim CASCADE;
+- Sau đó chạy lại tablespace_setup.sql
