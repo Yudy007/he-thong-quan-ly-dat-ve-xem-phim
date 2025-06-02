@@ -1,1 +1,0 @@
-# he-thong-quan-ly-dat-ve-xem-phim
