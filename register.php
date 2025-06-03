@@ -2,6 +2,12 @@
 session_start();
 require_once 'includes/functions.php';
 
+// Nếu đã đăng nhập thì chuyển hướng
+if (isset($_SESSION['MaND'])) {
+    header('Location: index.php');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
         'username' => $_POST['username'],
@@ -34,6 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     <div class="container">
         <h2>Đăng ký thành viên</h2>
+        
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert success"><?= $_SESSION['success'] ?></div>
+            <?php unset($_SESSION['success']); ?>
+        <?php endif; ?>
         
         <?php if (isset($error)): ?>
             <div class="alert error"><?= $error ?></div>

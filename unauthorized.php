@@ -1,4 +1,16 @@
-<?php
-echo "<h2>Không có quyền truy cập chức năng này.</h2>";
-echo "<a href='index.php'>Về trang chủ</a>";
-?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Truy cập bị từ chối</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="error-message">
+            <h1>⚠️ Truy cập bị từ chối</h1>
+            <p>Bạn không có quyền truy cập trang này</p>
+            <a href="index.php" class="btn">Về trang chủ</a>
+        </div>
+    </div>
+</body>
+</html>

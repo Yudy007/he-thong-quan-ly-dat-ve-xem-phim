@@ -1,6 +1,8 @@
 <?php
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
+
+// Kiểm tra quyền khách hàng
 checkRole('khachhang');
 
 $movies = getMovies();
@@ -22,7 +24,12 @@ $movies = getMovies();
         <div class="movie-grid">
             <?php foreach ($movies as $movie): ?>
                 <div class="movie-card">
-                    <img src="../assets/images/posters/<?= $movie['HinhAnh'] ?>" alt="<?= $movie['TenPhim'] ?>">
+                    <?php
+                    $posterPath = "../assets/images/posters/" . $movie['HinhAnh'];
+                    $defaultPoster = "../assets/images/posters/default.jpg";
+                    if (!file_exists($posterPath)) $posterPath = $defaultPoster;
+                    ?>
+                    <img src="<?= $posterPath ?>" alt="<?= $movie['TenPhim'] ?>">
                     <h3><?= $movie['TenPhim'] ?></h3>
                     <p>Thể loại: <?= $movie['TheLoai'] ?></p>
                     <a href="movie_detail.php?id=<?= $movie['MaPhim'] ?>" class="btn">Xem chi tiết</a>

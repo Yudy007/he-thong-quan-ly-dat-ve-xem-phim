@@ -25,7 +25,12 @@ $schedules = getSchedules($movieId);
     
     <div class="container">
         <div class="movie-detail">
-            <img src="../assets/images/posters/<?= $movie['HinhAnh'] ?>" class="poster-large">
+            <?php
+            $posterPath = "../assets/images/posters/" . $movie['HinhAnh'];
+            $defaultPoster = "../assets/images/posters/default.jpg";
+            if (!file_exists($posterPath)) $posterPath = $defaultPoster;
+            ?>
+            <img src="<?= $posterPath ?>" class="poster-large">
             
             <div class="movie-info">
                 <h1><?= $movie['TenPhim'] ?></h1>
@@ -36,30 +41,34 @@ $schedules = getSchedules($movieId);
         </div>
         
         <h2>Lịch chiếu</h2>
-        <table class="schedule-table">
-            <thead>
-                <tr>
-                    <th>Ngày chiếu</th>
-                    <th>Giờ bắt đầu</th>
-                    <th>Phòng</th>
-                    <th>Giá vé</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($schedules as $schedule): ?>
+        <?php if (empty($schedules)): ?>
+            <div class="alert info">Hiện chưa có lịch chiếu cho phim này</div>
+        <?php else: ?>
+            <table class="schedule-table">
+                <thead>
                     <tr>
-                        <td><?= date('d/m/Y', strtotime($schedule['ThoiGianBatDau'])) ?></td>
-                        <td><?= date('H:i', strtotime($schedule['ThoiGianBatDau'])) ?></td>
-                        <td>Phòng <?= $schedule['MaPhong'] ?></td>
-                        <td><?= number_format($schedule['GiaVe'], 0, ',', '.') ?> VNĐ</td>
-                        <td>
-                            <a href="booking.php?schedule_id=<?= $schedule['MaSuat'] ?>" class="btn">Đặt vé</a>
-                        </td>
+                        <th>Ngày chiếu</th>
+                        <th>Giờ bắt đầu</th>
+                        <th>Phòng</th>
+                        <th>Giá vé</th>
+                        <th>Thao tác</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php foreach ($schedules as $schedule): ?>
+                        <tr>
+                            <td><?= date('d/m/Y', strtotime($schedule['ThoiGianBatDau'])) ?></td>
+                            <td><?= date('H:i', strtotime($schedule['ThoiGianBatDau'])) ?></td>
+                            <td>Phòng <?= $schedule['MaPhong'] ?></td>
+                            <td><?= number_format($schedule['GiaVe'], 0, ',', '.') ?> VNĐ</td>
+                            <td>
+                                <a href="booking.php?schedule_id=<?= $schedule['MaSuat'] ?>" class="btn">Đặt vé</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
     </div>
     
     <?php include '../includes/footer.php'; ?>

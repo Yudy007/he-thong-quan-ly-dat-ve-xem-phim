@@ -39,6 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="container">
         <h2>Đăng nhập tài khoản</h2>
         
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert success"><?= $_SESSION['success'] ?></div>
+            <?php unset($_SESSION['success']); ?>
+        <?php endif; ?>
+        
         <?php if (isset($error)): ?>
             <div class="alert error"><?= $error ?></div>
         <?php endif; ?>

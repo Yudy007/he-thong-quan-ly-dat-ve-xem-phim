@@ -31,7 +31,14 @@ $tickets = getMyTickets($_SESSION['MaND']);
                         <div class="ticket-header">
                             <span class="ticket-id">#<?= $ticket['MaVe'] ?></span>
                             <span class="ticket-status <?= $ticket['TrangThai'] ?>">
-                                <?= getStatusText($ticket['TrangThai']) ?>
+                                <?= 
+                                match($ticket['TrangThai']) {
+                                    'da_dat' => 'Đã đặt',
+                                    'da_kiem_tra' => 'Đã kiểm tra',
+                                    'huy' => 'Đã hủy',
+                                    default => $ticket['TrangThai']
+                                }
+                                ?>
                             </span>
                         </div>
                         

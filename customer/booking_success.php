@@ -10,6 +10,12 @@ if (!isset($_GET['schedule_id'])) {
 
 $scheduleId = $_GET['schedule_id'];
 $lastBooking = getLastBooking($_SESSION['MaND'], $scheduleId);
+
+// Nếu không có vé nào, chuyển hướng
+if (!$lastBooking) {
+    header('Location: my_tickets.php');
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -36,6 +42,11 @@ $lastBooking = getLastBooking($_SESSION['MaND'], $scheduleId);
             <p><strong>Phòng:</strong> <?= $lastBooking['MaPhong'] ?></p>
             <p><strong>Ghế:</strong> <?= implode(', ', $lastBooking['DanhSachGhe']) ?></p>
             <p><strong>Tổng tiền:</strong> <?= number_format($lastBooking['TongTien'], 0, ',', '.') ?> VNĐ</p>
+            
+            <div class="ticket-qr">
+                <img src="../assets/images/qr-codes/<?= $lastBooking['MaVe'] ?>.png" alt="QR Code">
+                <p>Quét mã QR tại rạp để vào xem phim</p>
+            </div>
         </div>
         
         <div class="actions">
