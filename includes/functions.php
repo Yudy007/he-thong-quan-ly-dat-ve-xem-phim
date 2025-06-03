@@ -222,3 +222,153 @@ function getStats() {
     return $stats;
 }
 ?>
+
+// manage_users.php
+
+/**
+ * Lấy danh sách tất cả người dùng
+ */
+function getUsers() {
+    $conn = connectOracle();
+    $query = "SELECT MA_ND, TEN_DANG_NHAP, HO_TEN, VAI_TRO, EMAIL, SDT 
+              FROM NGUOIDUNG 
+              ORDER BY VAI_TRO, MA_ND";
+    
+    $stid = oci_parse($conn, $query);
+    oci_execute($stid);
+    
+    $users = [];
+    while ($row = oci_fetch_assoc($stid)) {
+        $users[] = $row;
+    }
+    
+    oci_free_statement($stid);
+    oci_close($conn);
+    
+    return $users;
+}
+
+/**
+ * Lấy thông tin người dùng bằng ID
+ */
+function getUserById($ma_nd) {
+    $conn = connectOracle();
+    $query = "SELECT MA_ND, TEN_DANG_NHAP, HO_TEN, VAI_TRO, EMAIL, SDT 
+              FROM NGUOIDUNG 
+              WHERE MA_ND = :ma_nd";
+    
+    $stid = oci_parse($conn, $query);
+    oci_bind_by_name($stid, ':ma_nd', $ma_nd);
+    oci_execute($stid);
+    
+    $user = oci_fetch_assoc($stid);
+    
+    oci_free_statement($stid);
+    oci_close($conn);
+    
+    return $user;
+}
+
+/**
+ * Thêm người dùng mới
+ */
+function insertUser($data) {
+    $conn = connectOracle();
+    
+    // Mã hóa mật khẩu (trong thực tế nên sử dụng password_hash())
+    $hashed_password = md5($data['mat_khau']);
+    
+    $query = "INSERT INTO NGUOIDUNG (
+                TEN_DANG_NHAP, 
+                MAT_KHAU, 
+                HO_TEN, 
+                VAI_TRO, 
+                EMAIL, 
+                SDT
+              ) VALUES (
+                :ten_dang_nhap, 
+                :mat_khau, 
+                :ho_ten, 
+                :vai_tro, 
+                :email, 
+                :sdt
+              )";
+    
+    $stid = oci_parse($conn, $query);
+    
+    oci_bind_by_name($stid, ':ten_dang_nhap', $data['ten_dang_nhap']);
+    oci_bind_by_name($stid, ':mat_khau', $hashed_password);
+    oci_bind_by_name($stid, ':ho_ten', $data['ho_ten']);
+    oci_bind_by_name($stid, ':vai_tro', $data['vai_tro']);
+    oci_bind_by_name($stid, ':email', $data['email']);
+    oci_bind_by_name($stid, ':sdt', $data['sdt']);
+    
+    $result = oci_execute($stid);
+    
+    oci_free_statement($stid);
+    oci_close($conn);
+    
+    return $result;
+}
+
+/**
+ * Cập nhật thông tin người dùng
+ */
+function updateUser($data) {
+    $conn = connectOracle();
+    
+    // Xây dựng câu lệnh SQL tùy thuộc vào việc có cập nhật mật khẩu hay không
+    $password_clause = '';
+    if (isset($data['mat_khau']) && !empty($data['mat_khau'])) {
+        $hashed_password = md5($data['mat_khau']);
+        $password_clause = "MAT_KHAU = :mat_khau,";
+    }
+    
+    $query = "UPDATE NGUOIDUNG SET
+                TEN_DANG_NHAP = :ten_dang_nhap,
+                {$password_clause}
+                HO_TEN = :ho_ten,
+                VAI_TRO = :vai_tro,
+                EMAIL = :email,
+                SDT = :sdt
+              WHERE MA_ND = :ma_nd";
+    
+    $stid = oci_parse($conn, $query);
+    
+    oci_bind_by_name($stid, ':ma_nd', $data['ma_nd']);
+    oci_bind_by_name($stid, ':ten_dang_nhap', $data['ten_dang_nhap']);
+    oci_bind_by_name($stid, ':ho_ten', $data['ho_ten']);
+    oci_bind_by_name($stid, ':vai_tro', $data['vai_tro']);
+    oci_bind_by_name($stid, ':email', $data['email']);
+    oci_bind_by_name($stid, ':sdt', $data['sdt']);
+    
+    if (isset($hashed_password)) {
+        oci_bind_by_name($stid, ':mat_khau', $hashed_password);
+    }
+    
+    $result = oci_execute($stid);
+    
+    oci_free_statement($stid);
+    oci_close($conn);
+    
+    return $result;
+}
+
+/**
+ * Xóa người dùng
+ */
+function deleteUser($ma_nd) {
+    $conn = connectOracle();
+    
+    $query = "DELETE FROM NGUOIDUNG WHERE MA_ND = :ma_nd";
+    
+    $stid = oci_parse($conn, $query);
+    oci_bind_by_name($stid, ':ma_nd', $ma_nd);
+    
+    $result = oci_execute($stid);
+    
+    oci_free_statement($stid);
+    oci_close($conn);
+    
+    return $result;
+}
