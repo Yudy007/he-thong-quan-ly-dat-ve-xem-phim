@@ -1,6 +1,20 @@
 -- Tạo USER sử dụng TABLESPACE mặc định
 CREATE USER qlvexemphim IDENTIFIED BY phim123;
 
--- Gán quyền cho user mới
+-- Cấp quyền cơ bản
 GRANT CONNECT, RESOURCE TO qlvexemphim;
 GRANT CREATE SESSION, CREATE TABLE, CREATE VIEW, CREATE PROCEDURE TO qlvexemphim;
+
+-- Cấp quyền thao tác bảng
+GRANT SELECT, INSERT, UPDATE, DELETE ON NGUOIDUNG TO qlvexemphim;
+GRANT SELECT, INSERT, UPDATE, DELETE ON PHIM TO qlvexemphim;
+GRANT SELECT, INSERT, UPDATE, DELETE ON PHONGCHIEU TO qlvexemphim;
+GRANT SELECT, INSERT, UPDATE, DELETE ON GHE TO qlvexemphim;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SUATCHIEU TO qlvexemphim;
+GRANT SELECT, INSERT, UPDATE, DELETE ON VE TO qlvexemphim;
+
+-- Cho phép chạy function
+GRANT EXECUTE ON TINHDOANHTHU_SUAT TO qlvexemphim;
+
+-- Cho phép ghi dữ liệu
+ALTER USER qlvexemphim QUOTA UNLIMITED ON USERS;
