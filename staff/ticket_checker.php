@@ -1,47 +1,78 @@
 <?php
-// File: /staff/ticket_checker.php
 require_once '../includes/auth.php';
-require_once '../includes/functions.php';
-checkRole('staff');
+checkRole('nhanvien');
 
-$result = null;
+$ticket = null;
+$error = null;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $ticket_code = $_POST['ticket_code'];
-    $result = checkTicket($ticket_code); // Hàm kiểm tra vé từ Oracle
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $ticketCode = $_POST['ticket_code'];
+    $ticket = verifyTicket($ticketCode);
+    
+    if (!$ticket) {
+        $error = "Vé không hợp lệ hoặc đã được kiểm tra trước đó";
+    } else {
+        markTicketChecked($ticket['MaVe']);
+    }
 }
-
-include_once '../includes/header.php';
 ?>
 
-<div class="container">
-    <h2>Kiểm tra vé</h2>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Kiểm tra vé</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <?php include '../includes/header.php'; ?>
     
-    <form method="POST" class="ticket-form">
-        <div class="input-group">
-            <input type="text" name="ticket_code" 
-                   placeholder="Nhập mã vé hoặc quét QR" required>
-            <button type="submit">Kiểm tra</button>
+    <div class="container">
+        <h1>Kiểm tra vé vào cửa</h1>
+        
+        <form method="POST" class="ticket-check-form">
+            <div class="form-group">
+                <label>Nhập mã vé hoặc quét QR code</label>
+                <input type="text" name="ticket_code" required 
+                       placeholder="VD: VE001234" autofocus>
+            </div>
+            
+            <button type="submit" class="btn">Kiểm tra vé</button>
+        </form>
+        
+        <?php if ($error): ?>
+            <div class="alert error"><?= $error ?></div>
+        <?php endif; ?>
+        
+        <?php if ($ticket): ?>
+        <div class="ticket-result">
+            <div class="ticket-header">
+                <h2>✅ Vé hợp lệ</h2>
+                <p>Mã vé: <strong><?= $ticket['MaVe'] ?></strong></p>
+            </div>
+            
+            <div class="ticket-details">
+                <div class="ticket-info">
+                    <p><strong>Phim:</strong> <?= $ticket['TenPhim'] ?></p>
+                    <p><strong>Phòng:</strong> <?= $ticket['MaPhong'] ?></p>
+                    <p><strong>Thời gian:</strong> <?= date('d/m/Y H:i', strtotime($ticket['ThoiGianBatDau'])) ?></p>
+                    <p><strong>Ghế:</strong> <?= implode(', ', $ticket['DanhSachGhe']) ?></p>
+                </div>
+                
+                <div class="ticket-qr">
+                    <img src="../assets/images/qr-codes/<?= $ticket['MaVe'] ?>.png" 
+                         alt="QR Code vé <?= $ticket['MaVe'] ?>">
+                </div>
+            </div>
+            
+            <div class="ticket-actions">
+                <button class="btn" onclick="window.print()">In vé</button>
+                <a href="ticket_checker.php" class="btn">Kiểm tra vé khác</a>
+            </div>
         </div>
-    </form>
-
-    <?php if ($result): ?>
-    <div class="ticket-result <?= $result['valid'] ? 'valid' : 'invalid' ?>">
-        <?php if ($result['valid']): ?>
-        <div class="status success">VÉ HỢP LỆ</div>
-        <div class="ticket-details">
-            <p><strong>Phim:</strong> <?= $result['ten_phim'] ?></p>
-            <p><strong>Suất chiếu:</strong> <?= $result['gio_chieu'] ?></p>
-            <p><strong>Phòng:</strong> <?= $result['phong_chieu'] ?></p>
-            <p><strong>Ghế:</strong> <?= $result['so_ghe'] ?></p>
-            <p><strong>Ngày đặt:</strong> <?= $result['ngay_dat'] ?></p>
-        </div>
-        <?php else: ?>
-        <div class="status error">VÉ KHÔNG HỢP LỆ</div>
-        <p class="reason"><?= $result['message'] ?></p>
         <?php endif; ?>
     </div>
-    <?php endif; ?>
-</div>
-
-<?php include_once '../includes/footer.php'; ?>
+    
+    <?php include '../includes/footer.php'; ?>
+</body>
+</html>

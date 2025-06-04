@@ -1,5 +1,3 @@
-/* style.css - Combined from (1).css and (2).css */
-/* Reset CSS */
 * {
     margin: 0;
     padding: 0;
@@ -255,7 +253,7 @@ h2 {
 /* ================= Stats Cards ================= */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
     margin: 20px 0;
 }
@@ -264,7 +262,15 @@ h2 {
     background: #fff;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a2a6c;
+    margin: 10px 0;
 }
 
 /* ================= Movie Styles ================= */
@@ -640,6 +646,178 @@ footer {
     border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* ================= Admin Styles ================= */
+.admin-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.admin-table th, 
+.admin-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+.admin-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #1a2a6c;
+}
+
+.table-poster {
+    width: 60px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-badge.dang_chieu {
+    background: #e8f5e9;
+    color: #4caf50;
+}
+
+.status-badge.sap_chieu {
+    background: #e3f2fd;
+    color: #2196f3;
+}
+
+.status-badge.ngung_chieu {
+    background: #ffebee;
+    color: #f44336;
+}
+
+.role-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.role-badge.admin {
+    background: #e8eaf6;
+    color: #3f51b5;
+}
+
+.role-badge.nhanvien {
+    background: #e3f2fd;
+    color: #2196f3;
+}
+
+.role-badge.khachhang {
+    background: #e8f5e9;
+    color: #4caf50;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+/* ================= Staff Styles ================= */
+.show-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.show-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #2196f3;
+}
+
+.show-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.ticket-result {
+    margin-top: 30px;
+    border: 2px dashed #1a2a6c;
+    border-radius: 8px;
+    padding: 25px;
+}
+
+.ticket-info {
+    flex: 1;
+}
+
+.ticket-qr img {
+    width: 150px;
+    height: 150px;
+}
+
+.ticket-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* ================= Report Styles ================= */
+.report-filters {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.filter-form .form-row {
+    align-items: flex-end;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.report-table th, 
+.report-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.report-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #1a2a6c;
+}
+
+.chart-container {
+    height: 400px;
+    margin: 40px 0;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
 /* ================= Responsive Design ================= */
 @media (max-width: 768px) {
     .stats-grid {
@@ -674,5 +852,10 @@ footer {
         display: flex;
         flex-wrap: wrap;
         gap: 5px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
     }
 }
