@@ -221,7 +221,6 @@ function getStats() {
     oci_close($conn);
     return $stats;
 }
-?>
 
 // manage_users.php
 
@@ -372,3 +371,4 @@ function deleteUser($ma_nd) {
     
     return $result;
 }
+?>
