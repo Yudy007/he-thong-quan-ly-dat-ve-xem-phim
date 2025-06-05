@@ -17,7 +17,7 @@ $schedules = getSchedules($movieId);
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title><?= $movie['TenPhim'] ?> - Chi tiết phim</title>
+    <title><?= htmlspecialchars($movie['TenPhim']) ?> - Chi tiết phim</title>
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
@@ -25,50 +25,60 @@ $schedules = getSchedules($movieId);
     
     <div class="container">
         <div class="movie-detail">
-            <?php
-            $posterPath = "../assets/images/posters/" . $movie['HinhAnh'];
-            $defaultPoster = "../assets/images/posters/default.jpg";
-            if (!file_exists($posterPath)) $posterPath = $defaultPoster;
-            ?>
-            <img src="<?= $posterPath ?>" class="poster-large">
+            <div class="movie-poster">
+                <img src="../assets/images/posters/<?= htmlspecialchars($movie['HinhAnh']) ?>" alt="<?= htmlspecialchars($movie['TenPhim']) ?>">
+            </div>
             
             <div class="movie-info">
-                <h1><?= $movie['TenPhim'] ?></h1>
-                <p><strong>Thể loại:</strong> <?= $movie['TheLoai'] ?></p>
-                <p><strong>Thời lượng:</strong> <?= $movie['ThoiLuong'] ?> phút</p>
-                <p><strong>Mô tả:</strong> <?= $movie['MoTa'] ?></p>
+                <h1><?= htmlspecialchars($movie['TenPhim']) ?></h1>
+                
+                <div class="movie-meta">
+                    <span><strong>Thể loại:</strong> <?= htmlspecialchars($movie['TheLoai']) ?></span>
+                    <span><strong>Thời lượng:</strong> <?= htmlspecialchars($movie['ThoiLuong']) ?> phút</span>
+                    <span><strong>Đánh giá:</strong> <?= htmlspecialchars($movie['DanhGia']) ?>/10</span>
+                </div>
+                
+                <div class="movie-description">
+                    <h3>Nội dung phim</h3>
+                    <p><?= htmlspecialchars($movie['MoTa']) ?></p>
+                </div>
+                
+                <div class="movie-cast">
+                    <h3>Diễn viên</h3>
+                    <p><?= htmlspecialchars($movie['DienVien']) ?></p>
+                </div>
             </div>
         </div>
         
-        <h2>Lịch chiếu</h2>
-        <?php if (empty($schedules)): ?>
-            <div class="alert info">Hiện chưa có lịch chiếu cho phim này</div>
-        <?php else: ?>
-            <table class="schedule-table">
-                <thead>
-                    <tr>
-                        <th>Ngày chiếu</th>
-                        <th>Giờ bắt đầu</th>
-                        <th>Phòng</th>
-                        <th>Giá vé</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div class="schedule-section">
+            <h2>Lịch chiếu</h2>
+            
+            <?php if (empty($schedules)): ?>
+                <div class="alert info">
+                    <p>Hiện chưa có suất chiếu cho phim này.</p>
+                </div>
+            <?php else: ?>
+                <div class="schedule-list">
                     <?php foreach ($schedules as $schedule): ?>
-                        <tr>
-                            <td><?= date('d/m/Y', strtotime($schedule['ThoiGianBatDau'])) ?></td>
-                            <td><?= date('H:i', strtotime($schedule['ThoiGianBatDau'])) ?></td>
-                            <td>Phòng <?= $schedule['MaPhong'] ?></td>
-                            <td><?= number_format($schedule['GiaVe'], 0, ',', '.') ?> VNĐ</td>
-                            <td>
+                        <div class="schedule-card">
+                            <div class="schedule-time">
+                                <div class="schedule-date"><?= date('d/m/Y', strtotime($schedule['ThoiGianBatDau'])) ?></div>
+                                <div class="schedule-hour"><?= date('H:i', strtotime($schedule['ThoiGianBatDau'])) ?></div>
+                            </div>
+                            
+                            <div class="schedule-info">
+                                <div class="schedule-room">Phòng <?= htmlspecialchars($schedule['MaPhong']) ?></div>
+                                <div class="schedule-price"><?= number_format($schedule['GiaVe'], 0, ',', '.') ?> VNĐ</div>
+                            </div>
+                            
+                            <div class="schedule-action">
                                 <a href="booking.php?schedule_id=<?= $schedule['MaSuat'] ?>" class="btn">Đặt vé</a>
-                            </td>
-                        </tr>
+                            </div>
+                        </div>
                     <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
     
     <?php include '../includes/footer.php'; ?>

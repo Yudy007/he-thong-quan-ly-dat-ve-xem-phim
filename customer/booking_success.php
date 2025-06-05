@@ -3,19 +3,14 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 checkRole('khachhang');
 
-if (!isset($_GET['schedule_id'])) {
+// Kiểm tra xem có thông tin vé trong session không
+if (!isset($_SESSION['last_booking'])) {
     header('Location: home.php');
     exit;
 }
 
-$scheduleId = $_GET['schedule_id'];
-$lastBooking = getLastBooking($_SESSION['MaND'], $scheduleId);
-
-// Nếu không có vé nào, chuyển hướng
-if (!$lastBooking) {
-    header('Location: my_tickets.php');
-    exit;
-}
+$booking = $_SESSION['last_booking'];
+unset($_SESSION['last_booking']); // Xóa thông tin sau khi hiển thị
 ?>
 
 <!DOCTYPE html>
@@ -29,29 +24,62 @@ if (!$lastBooking) {
     <?php include '../includes/header.php'; ?>
     
     <div class="container">
-        <div class="success-message">
-            <h2>🎉 Đặt vé thành công!</h2>
-            <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi</p>
-        </div>
-        
-        <div class="ticket-details">
-            <h3>Thông tin vé</h3>
-            <p><strong>Mã vé:</strong> <?= $lastBooking['MaVe'] ?></p>
-            <p><strong>Phim:</strong> <?= $lastBooking['TenPhim'] ?></p>
-            <p><strong>Suất chiếu:</strong> <?= date('d/m/Y H:i', strtotime($lastBooking['ThoiGianBatDau'])) ?></p>
-            <p><strong>Phòng:</strong> <?= $lastBooking['MaPhong'] ?></p>
-            <p><strong>Ghế:</strong> <?= implode(', ', $lastBooking['DanhSachGhe']) ?></p>
-            <p><strong>Tổng tiền:</strong> <?= number_format($lastBooking['TongTien'], 0, ',', '.') ?> VNĐ</p>
-            
-            <div class="ticket-qr">
-                <img src="../assets/images/qr-codes/<?= $lastBooking['MaVe'] ?>.png" alt="QR Code">
-                <p>Quét mã QR tại rạp để vào xem phim</p>
+        <div class="success-container">
+            <div class="success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
             </div>
-        </div>
-        
-        <div class="actions">
-            <a href="my_tickets.php" class="btn">Xem vé của tôi</a>
-            <a href="home.php" class="btn">Về trang chủ</a>
+            
+            <h1>Đặt vé thành công!</h1>
+            <p class="success-message">Cảm ơn bạn đã đặt vé tại hệ thống của chúng tôi</p>
+            
+            <div class="ticket-details">
+                <h2>Thông tin vé</h2>
+                
+                <div class="ticket-info">
+                    <div class="info-row">
+                        <span class="info-label">Mã vé:</span>
+                        <span class="info-value"><?= htmlspecialchars($booking['MaVe']) ?></span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Phim:</span>
+                        <span class="info-value"><?= htmlspecialchars($booking['TenPhim']) ?></span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Suất chiếu:</span>
+                        <span class="info-value"><?= date('d/m/Y H:i', strtotime($booking['ThoiGianBatDau'])) ?></span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Phòng:</span>
+                        <span class="info-value"><?= htmlspecialchars($booking['MaPhong']) ?></span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Ghế:</span>
+                        <span class="info-value"><?= htmlspecialchars(implode(', ', $booking['DanhSachGhe'])) ?></span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Tổng tiền:</span>
+                        <span class="info-value price"><?= number_format($booking['TongTien'], 0, ',', '.') ?> VNĐ</span>
+                    </div>
+                </div>
+                
+                <div class="ticket-qr">
+                    <img src="../assets/images/qr-codes/<?= htmlspecialchars($booking['MaVe']) ?>.png" alt="Mã QR vé">
+                    <p>Quét mã QR tại rạp để nhận vé</p>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <a href="my_tickets.php" class="btn">Xem tất cả vé</a>
+                <a href="home.php" class="btn btn-secondary">Về trang chủ</a>
+            </div>
         </div>
     </div>
     
