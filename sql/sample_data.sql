@@ -1,7 +1,7 @@
 -- Dữ liệu cho NguoiDung
-INSERT INTO NguoiDung VALUES ('ND01', 'admin', 'admin123', 'Nguyễn Văn A', 'admin');
-INSERT INTO NguoiDung VALUES ('ND02', 'staff1', 'staff123', 'Trần Văn B', 'nhanvien');
-INSERT INTO NguoiDung VALUES ('ND03', 'user1', 'user123', 'Lê Thị C', 'khachhang');
+INSERT INTO NguoiDung VALUES ('ND01', 'admin', 'admin123', 'admin', 'admin');
+INSERT INTO NguoiDung VALUES ('ND02', 'staff1', 'staff123', 'nhan vien', 'nhanvien');
+INSERT INTO NguoiDung VALUES ('ND03', 'user1', 'user123', 'nguoi dung', 'khachhang');
 
 -- Dữ liệu cho Phim
 INSERT INTO Phim VALUES ('P01', 'Avengers: Endgame', 'Hành động', 181, 'Phim siêu anh hùng', 'dang_chieu');
