@@ -20,17 +20,17 @@ $hoTen = $_SESSION['hoTen'] ?? null;
             <?php elseif ($vaiTro === 'nhanvien'): ?>
                 <li><a href="/staff/check_ticket.php">Kiểm tra vé</a></li>
             <?php elseif ($vaiTro === 'admin'): ?>
-                <li><a href="/admin/manage_users.php">Quản lý người dùng</a></li>
-                <li><a href="/admin/manage_movies.php">Quản lý phim</a></li>
-                <li><a href="/admin/manage_schedules.php">Quản lý suất</a></li>
-                <li><a href="/admin/reports.php">Báo cáo</a></li>
+                <li><a href="admin/manage_users.php">Quản lý người dùng</a></li>
+                <li><a href="admin/manage_movies.php">Quản lý phim</a></li>
+                <li><a href="admin/manage_schedules.php">Quản lý suất</a></li>
+                <li><a href="admin/reports.php">Báo cáo</a></li>
             <?php endif; ?>
         </ul>
 
         <ul class="auth-links">
             <?php if ($vaiTro): ?>
                 <li><span><?= htmlspecialchars($hoTen) ?> (<?= $vaiTro ?>)</span></li>
-                <li><a href="/logout.php" class="btn small">Đăng xuất</a></li>
+                <li><a href="logout.php" class="btn small">Đăng xuất</a></li>
             <?php else: ?>
                 <li><a href="login.php">Đăng nhập</a></li>
                 <li><a href="register.php">Đăng ký</a></li>

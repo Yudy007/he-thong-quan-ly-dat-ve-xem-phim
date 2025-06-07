@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/functions.php';
-$movies = getAllMovies(); // Hàm này đã viết trong functions.php
+$movies = getAllMovies();
 ?>
 
 <!DOCTYPE html>

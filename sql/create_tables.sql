@@ -1,10 +1,13 @@
--- Tạo bảng người dùng
+-- Bảng người dùng
 CREATE TABLE NguoiDung (
     MaND VARCHAR2(10) PRIMARY KEY,
     TenDangNhap VARCHAR2(30) UNIQUE NOT NULL,
     MatKhau VARCHAR2(100) NOT NULL,
     HoTen VARCHAR2(50) NOT NULL,
-    VaiTro VARCHAR2(20) CHECK (VaiTro IN ('admin', 'nhanvien', 'khachhang'))
+    VaiTro VARCHAR2(20) CHECK (VaiTro IN ('admin', 'nhanvien', 'khachhang')),
+    Email VARCHAR2(100),
+    SDT VARCHAR2(15),
+    NgayTao DATE DEFAULT SYSDATE
 );
 
 -- Bảng phim
@@ -57,3 +60,18 @@ CREATE TABLE Ve (
     FOREIGN KEY (MaGhe) REFERENCES Ghe(MaGhe),
     FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung(MaND)
 );
+
+/* Xoá bảng theo thứ tự ràng buộc khóa ngoại nếu bảng lỗi
+BEGIN
+    EXECUTE IMMEDIATE 'DROP TABLE Ve CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE SuatChieu CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE Ghe CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE PhongChieu CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE Phim CASCADE CONSTRAINTS';
+    EXECUTE IMMEDIATE 'DROP TABLE NguoiDung CASCADE CONSTRAINTS';
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Lỗi khi xoá bảng: ' || SQLERRM);
+END;
+/
+*/
