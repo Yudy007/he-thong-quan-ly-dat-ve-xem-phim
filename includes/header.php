@@ -9,11 +9,11 @@ $hoTen = $_SESSION['hoTen'] ?? null;
 <header>
     <nav class="main-nav">
         <div class="logo">
-            <a href="/index.php">🎬 MovieBooking</a>
+            <a href="index.php">MovieBooking</a>
         </div>
 
         <ul class="nav-links">
-            <li><a href="/index.php">Trang chủ</a></li>
+            <li><a href="index.php">Trang chủ</a></li>
 
             <?php if ($vaiTro === 'khachhang'): ?>
                 <li><a href="/my_tickets.php">Vé đã đặt</a></li>
@@ -29,11 +29,11 @@ $hoTen = $_SESSION['hoTen'] ?? null;
 
         <ul class="auth-links">
             <?php if ($vaiTro): ?>
-                <li><span>👤 <?= htmlspecialchars($hoTen) ?> (<?= $vaiTro ?>)</span></li>
+                <li><span><?= htmlspecialchars($hoTen) ?> (<?= $vaiTro ?>)</span></li>
                 <li><a href="/logout.php" class="btn small">Đăng xuất</a></li>
             <?php else: ?>
-                <li><a href="/login.php">Đăng nhập</a></li>
-                <li><a href="/register.php">Đăng ký</a></li>
+                <li><a href="login.php">Đăng nhập</a></li>
+                <li><a href="register.php">Đăng ký</a></li>
             <?php endif; ?>
         </ul>
     </nav>

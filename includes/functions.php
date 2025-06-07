@@ -45,7 +45,7 @@ function registerUser($data) {
  * Lấy danh sách phim đang chiếu
  * @return array
  */
-function getMovies() {
+function getAllMovies() {
     $conn = connectOracle();
     $sql = "SELECT * FROM Phim WHERE TrangThai = 'dang_chieu'";
     $stmt = oci_parse($conn, $sql);
@@ -585,4 +585,54 @@ function deleteStaffAccount($staffId) {
     oci_close($conn);
     return $result;
 }
+
+function getAllSchedules() {
+    $conn = connectOracle();
+    $sql = "SELECT sc.*, p.TenPhim, pc.TenPhong 
+            FROM SuatChieu sc 
+            JOIN Phim p ON sc.MaPhim = p.MaPhim 
+            JOIN PhongChieu pc ON sc.MaPhong = pc.MaPhong 
+            ORDER BY sc.ThoiGianBatDau DESC";
+    $stmt = oci_parse($conn, $sql);
+    oci_execute($stmt);
+    $schedules = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $schedules[] = $row;
+    }
+    return $schedules;
+}
+
+function getAllMoviesAdmin() {
+    $conn = connectOracle();
+    $stmt = oci_parse($conn, "SELECT * FROM Phim ORDER BY TenPhim");
+    oci_execute($stmt);
+    $result = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $result[] = $row;
+    }
+    return $result;
+}
+
+function insertSchedule($data) {
+    $conn = connectOracle();
+    $sql = "INSERT INTO SuatChieu (MaSuat, MaPhim, MaPhong, ThoiGianBatDau, ThoiGianKetThuc, GiaVe)
+            VALUES (:MaSuat, :MaPhim, :MaPhong, TO_DATE(:BatDau, 'YYYY-MM-DD\"T\"HH24:MI'), TO_DATE(:KetThuc, 'YYYY-MM-DD\"T\"HH24:MI'), :GiaVe)";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":MaSuat", $data['MaSuat']);
+    oci_bind_by_name($stmt, ":MaPhim", $data['MaPhim']);
+    oci_bind_by_name($stmt, ":MaPhong", $data['MaPhong']);
+    oci_bind_by_name($stmt, ":BatDau", $data['ThoiGianBatDau']);
+    oci_bind_by_name($stmt, ":KetThuc", $data['ThoiGianKetThuc']);
+    oci_bind_by_name($stmt, ":GiaVe", $data['GiaVe']);
+    return oci_execute($stmt);
+}
+
+function deleteSchedule($maSuat) {
+    $conn = connectOracle();
+    $stmt = oci_parse($conn, "DELETE FROM SuatChieu WHERE MaSuat = :MaSuat");
+    oci_bind_by_name($stmt, ":MaSuat", $maSuat);
+    return oci_execute($stmt);
+}
+
 ?>
+
