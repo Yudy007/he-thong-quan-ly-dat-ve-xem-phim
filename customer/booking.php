@@ -1,30 +1,38 @@
 <?php
-require_once '../includes/auth.php';
-require_once '../includes/functions.php';
-checkRole('khachhang');
+require_once 'includes/auth.php';
+require_once 'includes/functions.php';
+checkRole('khachhang'); // Chỉ khách hàng mới được đặt vé
 
-if (!isset($_GET['schedule_id'])) {
-    header('Location: home.php');
-    exit;
+$conn = connectOracle();
+
+// Bước 1: Lấy danh sách suất chiếu của phim đã chọn
+$phimId = $_GET['phim'] ?? null;
+$suatChieuId = $_GET['suat'] ?? null;
+
+$suatChieus = [];
+$gheTrong = [];
+$tenPhim = null;
+$success = false;
+
+if ($phimId) {
+    $suatChieus = getSuatChieuByPhim($phimId);
+    $tenPhim = getTenPhimById($phimId);
 }
 
-$scheduleId = $_GET['schedule_id'];
-$schedule = getScheduleDetails($scheduleId);
-$seats = getAvailableSeats($scheduleId);
+if ($suatChieuId) {
+    $gheTrong = getAvailableSeats($suatChieuId);
+}
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (empty($_POST['seats'])) {
-        $error = "Vui lòng chọn ít nhất một ghế";
+// Bước 2: Xử lý đặt vé
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['maGhe']) && $suatChieuId) {
+    $maNguoiDung = $_SESSION['MaND'];
+    $maGhe = $_POST['maGhe'];
+
+    if (insertVe($suatChieuId, $maGhe, $maNguoiDung)) {
+        $success = true;
+        $gheTrong = getAvailableSeats($suatChieuId); // Cập nhật lại ghế
     } else {
-        $selectedSeats = $_POST['seats'];
-        $userId = $_SESSION['MaND'];
-        
-        if (bookTicket($userId, $scheduleId, $selectedSeats)) {
-            header("Location: booking_success.php?schedule_id=$scheduleId");
-            exit;
-        } else {
-            $error = "Có lỗi xảy ra khi đặt vé. Vui lòng thử lại";
-        }
+        $error = "Đặt vé thất bại. Ghế đã có người đặt.";
     }
 }
 ?>
@@ -34,82 +42,59 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Đặt vé xem phim</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <script src="../assets/js/scripts.js"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-    <?php include '../includes/header.php'; ?>
-    
-    <div class="container">
-        <h2>Đặt vé: <?= $schedule['TenPhim'] ?></h2>
-        <p>Suất chiếu: <?= date('d/m/Y H:i', strtotime($schedule['ThoiGianBatDau'])) ?></p>
-        <p>Phòng: <?= $schedule['MaPhong'] ?></p>
-        <p class="price-info">Giá vé: <?= number_format($schedule['GiaVe'], 0, ',', '.') ?> VNĐ/ghế</p>
-        
-        <?php if (isset($error)): ?>
+
+<?php include 'includes/header.php'; ?>
+
+<div class="container">
+    <h2>🎟️ Đặt vé xem phim</h2>
+
+    <?php if ($tenPhim): ?>
+        <p><strong>Phim:</strong> <?= htmlspecialchars($tenPhim) ?></p>
+    <?php endif; ?>
+
+    <!-- Bước 1: Chọn suất chiếu -->
+    <form method="get" action="booking.php">
+        <input type="hidden" name="phim" value="<?= $phimId ?>">
+        <label>Chọn suất chiếu:</label>
+        <select name="suat" required onchange="this.form.submit()">
+            <option value="">-- Chọn suất --</option>
+            <?php foreach ($suatChieus as $suat): ?>
+                <option value="<?= $suat['MASUAT'] ?>" <?= ($suat['MASUAT'] == $suatChieuId ? 'selected' : '') ?>>
+                    <?= date('d/m/Y H:i', strtotime($suat['THOIGIANBATDAU'])) ?> – 
+                    Phòng <?= $suat['TENPHONG'] ?> – Giá <?= number_format($suat['GIAVE']) ?>đ
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </form>
+
+    <!-- Bước 2: Chọn ghế -->
+    <?php if ($suatChieuId): ?>
+        <h3>Chọn ghế:</h3>
+
+        <?php if ($success): ?>
+            <div class="alert success">Đặt vé thành công!</div>
+        <?php elseif (isset($error)): ?>
             <div class="alert error"><?= $error ?></div>
         <?php endif; ?>
-        
-        <form method="POST" id="booking-form">
-            <h3>Chọn ghế (Tối đa 6 ghế)</h3>
-            
-            <?php if (empty($seats)): ?>
-                <div class="alert warning">Suất chiếu này đã hết ghế trống</div>
-            <?php else: ?>
-                <div class="seat-map">
-                    <?php foreach ($seats as $seat): ?>
-                        <div class="seat">
-                            <input type="checkbox" name="seats[]" value="<?= $seat['MaGhe'] ?>" 
-                                   id="seat-<?= $seat['MaGhe'] ?>" class="seat-checkbox">
-                            <label for="seat-<?= $seat['MaGhe'] ?>" class="seat-label">
-                                <?= $seat['TenGhe'] ?>
-                            </label>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                
-                <div class="booking-summary">
-                    <p>Đã chọn: <span id="selected-count">0</span> ghế</p>
-                    <p>Tổng tiền: <span id="total-price">0</span> VNĐ</p>
-                </div>
-                
-                <button type="submit" class="btn">Xác nhận đặt vé</button>
-            <?php endif; ?>
+
+        <form method="POST">
+            <div class="seat-grid">
+                <?php foreach ($gheTrong as $ghe): ?>
+                    <label class="seat">
+                        <input type="radio" name="maGhe" value="<?= $ghe['MAGHE'] ?>" required>
+                        <?= $ghe['SOGHE'] ?> (<?= $ghe['LOAIGHE'] ?>)
+                    </label>
+                <?php endforeach; ?>
+            </div>
+            <br>
+            <button type="submit" class="btn">Xác nhận đặt vé</button>
         </form>
-    </div>
-    
-    <?php include '../includes/footer.php'; ?>
-    
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const seatPrice = <?= $schedule['GiaVe'] ?>;
-        const checkboxes = document.querySelectorAll('.seat-checkbox');
-        const selectedCount = document.getElementById('selected-count');
-        const totalPrice = document.getElementById('total-price');
-        
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const selected = document.querySelectorAll('.seat-checkbox:checked');
-                selectedCount.textContent = selected.length;
-                totalPrice.textContent = (selected.length * seatPrice).toLocaleString();
-                
-                if (selected.length > 6) {
-                    alert('Bạn chỉ có thể chọn tối đa 6 ghế');
-                    this.checked = false;
-                    selectedCount.textContent = 6;
-                    totalPrice.textContent = (6 * seatPrice).toLocaleString();
-                }
-            });
-        });
-        
-        document.getElementById('booking-form').addEventListener('submit', function(e) {
-            const selected = document.querySelectorAll('.seat-checkbox:checked');
-            if (selected.length === 0) {
-                e.preventDefault();
-                alert('Vui lòng chọn ít nhất một ghế');
-            }
-        });
-    });
-    </script>
+    <?php endif; ?>
+</div>
+
+<?php include 'includes/footer.php'; ?>
 </body>
 </html>

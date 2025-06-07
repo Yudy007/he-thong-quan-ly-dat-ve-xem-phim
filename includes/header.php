@@ -1,52 +1,40 @@
 <?php
-if (!isset($_SESSION)) session_start();
-$role = $_SESSION['VaiTro'] ?? null;
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$vaiTro = $_SESSION['VaiTro'] ?? null;
+$hoTen = $_SESSION['hoTen'] ?? null;
 ?>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Hệ thống đặt vé xem phim</title>
-    <link rel="stylesheet" href="/movie_booking/assets/css/style.css">
-</head>
-<body>
-    <header style="background: #003366; color: white; padding: 10px;">
-        <div class="container">
-            <h1 style="margin: 0;">🎬 Movie Booking System</h1>
-            <?php if (isset($_SESSION['MaND'])): ?>
-                <div style="font-size: 14px;">
-                    Xin chào, <strong><?= htmlspecialchars($_SESSION['hoTen']) ?></strong> 
-                    (<?= htmlspecialchars($_SESSION['VaiTro']) ?>) |
-                    <a href="/movie_booking/logout.php" style="color: white;">Đăng xuất</a>
-                </div>
+<header>
+    <nav class="main-nav">
+        <div class="logo">
+            <a href="/index.php">🎬 MovieBooking</a>
+        </div>
+
+        <ul class="nav-links">
+            <li><a href="/index.php">Trang chủ</a></li>
+
+            <?php if ($vaiTro === 'khachhang'): ?>
+                <li><a href="/my_tickets.php">Vé đã đặt</a></li>
+            <?php elseif ($vaiTro === 'nhanvien'): ?>
+                <li><a href="/staff/check_ticket.php">Kiểm tra vé</a></li>
+            <?php elseif ($vaiTro === 'admin'): ?>
+                <li><a href="/admin/manage_users.php">Quản lý người dùng</a></li>
+                <li><a href="/admin/manage_movies.php">Quản lý phim</a></li>
+                <li><a href="/admin/manage_schedules.php">Quản lý suất</a></li>
+                <li><a href="/admin/reports.php">Báo cáo</a></li>
+            <?php endif; ?>
+        </ul>
+
+        <ul class="auth-links">
+            <?php if ($vaiTro): ?>
+                <li><span>👤 <?= htmlspecialchars($hoTen) ?> (<?= $vaiTro ?>)</span></li>
+                <li><a href="/logout.php" class="btn small">Đăng xuất</a></li>
             <?php else: ?>
-                <div style="font-size: 14px;">
-                    <a href="/movie_booking/login.php" style="color: white;">Đăng nhập</a> |
-                    <a href="/movie_booking/register.php" style="color: white;">Đăng ký</a>
-                </div>
+                <li><a href="/login.php">Đăng nhập</a></li>
+                <li><a href="/register.php">Đăng ký</a></li>
             <?php endif; ?>
-        </div>
-    </header>
-
-    <nav style="background: #f2f2f2; padding: 10px;">
-        <div class="container">
-            <a href="/movie_booking/index.php">Trang chủ</a>
-            <?php if ($role === 'admin'): ?>
-                | <a href="/movie_booking/admin/dashboard.php"> Dashboard</a>
-                | <a href="/movie_booking/admin/manage_movies.php"> Quản lý phim</a>
-                | <a href="/movie_booking/admin/manage_schedules.php"> Quản lý suất chiếu</a>
-                | <a href="/movie_booking/admin/manage_rooms.php"> Quản lý phòng & ghế</a>
-                | <a href="/movie_booking/admin/manage_users.php"> Quản lý người dùng</a>
-                | <a href="/movie_booking/admin/reports.php"> Thống kê</a>
-            <?php elseif ($role === 'nhanvien'): ?>
-                | <a href="/movie_booking/staff/dashboard.php"> Dashboard</a>
-                | <a href="/movie_booking/staff/ticket_checker.php"> Kiểm tra vé</a>
-            <?php elseif ($role === 'khachhang'): ?>
-                | <a href="/movie_booking/customer/home.php"> Trang chủ</a>
-                | <a href="/movie_booking/customer/booking.php"> Đặt vé</a>
-                | <a href="/movie_booking/customer/my_tickets.php">Vé của tôi</a>
-            <?php endif; ?>
-        </div>
+        </ul>
     </nav>
-
-    <main class="container" style="padding: 20px;">
+</header>
