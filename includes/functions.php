@@ -358,17 +358,231 @@ function updateUser($data) {
  */
 function deleteUser($ma_nd) {
     $conn = connectOracle();
-    
+
     $query = "DELETE FROM NGUOIDUNG WHERE MA_ND = :ma_nd";
-    
+
     $stid = oci_parse($conn, $query);
     oci_bind_by_name($stid, ':ma_nd', $ma_nd);
-    
+
     $result = oci_execute($stid);
-    
+
     oci_free_statement($stid);
     oci_close($conn);
-    
+
+    return $result;
+}
+
+// ===== THÊM CÁC HÀM MỚI CHO HỆ THỐNG =====
+
+/**
+ * Lấy thống kê cho admin dashboard
+ */
+function getAdminStats() {
+    $conn = connectOracle();
+
+    // Tổng số phim
+    $stmt1 = oci_parse($conn, "SELECT COUNT(*) as total FROM Phim");
+    oci_execute($stmt1);
+    $total_movies = oci_fetch_assoc($stmt1)['TOTAL'];
+
+    // Tổng số vé đã bán
+    $stmt2 = oci_parse($conn, "SELECT COUNT(*) as total FROM Ve WHERE TrangThai IN ('da_dat', 'da_kiem_tra')");
+    oci_execute($stmt2);
+    $total_tickets = oci_fetch_assoc($stmt2)['TOTAL'];
+
+    // Doanh thu tháng này
+    $stmt3 = oci_parse($conn, "SELECT SUM(sc.GiaVe) as revenue FROM Ve v JOIN SuatChieu sc ON v.MaSuat = sc.MaSuat WHERE EXTRACT(MONTH FROM v.ThoiGianDat) = EXTRACT(MONTH FROM SYSDATE) AND EXTRACT(YEAR FROM v.ThoiGianDat) = EXTRACT(YEAR FROM SYSDATE)");
+    oci_execute($stmt3);
+    $monthly_revenue = oci_fetch_assoc($stmt3)['REVENUE'] ?? 0;
+
+    // Tổng số người dùng
+    $stmt4 = oci_parse($conn, "SELECT COUNT(*) as total FROM NguoiDung");
+    oci_execute($stmt4);
+    $total_users = oci_fetch_assoc($stmt4)['TOTAL'];
+
+    oci_close($conn);
+
+    return [
+        'total_movies' => $total_movies,
+        'total_tickets' => $total_tickets,
+        'monthly_revenue' => $monthly_revenue,
+        'total_users' => $total_users
+    ];
+}
+
+/**
+ * Lấy hoạt động gần đây
+ */
+function getRecentActivities() {
+    $conn = connectOracle();
+    $sql = "SELECT v.ThoiGianDat as ThoiGian, nd.HoTen, 'Đặt vé' as HoatDong, p.TenPhim as ChiTiet
+            FROM Ve v
+            JOIN NguoiDung nd ON v.MaNguoiDung = nd.MaND
+            JOIN SuatChieu sc ON v.MaSuat = sc.MaSuat
+            JOIN Phim p ON sc.MaPhim = p.MaPhim
+            ORDER BY v.ThoiGianDat DESC
+            FETCH FIRST 10 ROWS ONLY";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_execute($stmt);
+
+    $activities = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $activities[] = $row;
+    }
+
+    oci_close($conn);
+    return $activities;
+}
+
+/**
+ * Lấy suất chiếu hôm nay cho nhân viên
+ */
+function getTodaySchedules() {
+    $conn = connectOracle();
+    $sql = "SELECT sc.*, p.TenPhim, pc.TenPhong,
+                   (SELECT COUNT(*) FROM Ghe WHERE MaPhong = sc.MaPhong) as TongGhe,
+                   (SELECT COUNT(*) FROM Ghe g WHERE g.MaPhong = sc.MaPhong
+                    AND g.MaGhe NOT IN (SELECT MaGhe FROM Ve WHERE MaSuat = sc.MaSuat AND TrangThai IN ('da_dat', 'da_kiem_tra'))) as GheTrong
+            FROM SuatChieu sc
+            JOIN Phim p ON sc.MaPhim = p.MaPhim
+            JOIN PhongChieu pc ON sc.MaPhong = pc.MaPhong
+            WHERE TRUNC(sc.ThoiGianBatDau) = TRUNC(SYSDATE)
+            ORDER BY sc.ThoiGianBatDau";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_execute($stmt);
+
+    $schedules = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $schedules[] = $row;
+    }
+
+    oci_close($conn);
+    return $schedules;
+}
+
+/**
+ * Lấy danh sách phòng chiếu
+ */
+function getRooms() {
+    $conn = connectOracle();
+    $sql = "SELECT * FROM PhongChieu ORDER BY MaPhong";
+    $stmt = oci_parse($conn, $sql);
+    oci_execute($stmt);
+
+    $rooms = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $rooms[] = $row;
+    }
+
+    oci_close($conn);
+    return $rooms;
+}
+
+/**
+ * Thêm phòng chiếu mới
+ */
+function addRoom($data) {
+    $conn = connectOracle();
+    $sql = "INSERT INTO PhongChieu (MaPhong, TenPhong, SoLuongGhe) VALUES (:maphong, :tenphong, :soluongghe)";
+    $stmt = oci_parse($conn, $sql);
+
+    oci_bind_by_name($stmt, ":maphong", $data['MaPhong']);
+    oci_bind_by_name($stmt, ":tenphong", $data['TenPhong']);
+    oci_bind_by_name($stmt, ":soluongghe", $data['SoLuongGhe']);
+
+    $result = oci_execute($stmt);
+    oci_close($conn);
+    return $result;
+}
+
+/**
+ * Lấy danh sách ghế theo phòng
+ */
+function getSeatsByRoom($roomId) {
+    $conn = connectOracle();
+    $sql = "SELECT * FROM Ghe WHERE MaPhong = :maphong ORDER BY SoGhe";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":maphong", $roomId);
+    oci_execute($stmt);
+
+    $seats = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $seats[] = $row;
+    }
+
+    oci_close($conn);
+    return $seats;
+}
+
+/**
+ * Thêm ghế mới
+ */
+function addSeat($data) {
+    $conn = connectOracle();
+    $sql = "INSERT INTO Ghe (MaGhe, MaPhong, SoGhe, LoaiGhe) VALUES (:maghe, :maphong, :soghe, :loaighe)";
+    $stmt = oci_parse($conn, $sql);
+
+    oci_bind_by_name($stmt, ":maghe", $data['MaGhe']);
+    oci_bind_by_name($stmt, ":maphong", $data['MaPhong']);
+    oci_bind_by_name($stmt, ":soghe", $data['SoGhe']);
+    oci_bind_by_name($stmt, ":loaighe", $data['LoaiGhe']);
+
+    $result = oci_execute($stmt);
+    oci_close($conn);
+    return $result;
+}
+
+/**
+ * Tạo tài khoản nhân viên (chỉ admin mới được dùng)
+ */
+function createStaffAccount($data) {
+    $conn = connectOracle();
+    $sql = "INSERT INTO NguoiDung (MaND, TenDangNhap, MatKhau, HoTen, VaiTro)
+            VALUES (:mand, :tendn, :matkhau, :hoten, 'nhanvien')";
+    $stmt = oci_parse($conn, $sql);
+
+    $data['MaND'] = uniqid("NV");
+    oci_bind_by_name($stmt, ":mand", $data['MaND']);
+    oci_bind_by_name($stmt, ":tendn", $data['TenDangNhap']);
+    oci_bind_by_name($stmt, ":matkhau", $data['MatKhau']);
+    oci_bind_by_name($stmt, ":hoten", $data['HoTen']);
+
+    $result = oci_execute($stmt);
+    oci_close($conn);
+    return $result;
+}
+
+/**
+ * Lấy danh sách nhân viên (chỉ admin)
+ */
+function getStaffList() {
+    $conn = connectOracle();
+    $sql = "SELECT MaND, TenDangNhap, HoTen FROM NguoiDung WHERE VaiTro = 'nhanvien' ORDER BY HoTen";
+    $stmt = oci_parse($conn, $sql);
+    oci_execute($stmt);
+
+    $staff = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $staff[] = $row;
+    }
+
+    oci_close($conn);
+    return $staff;
+}
+
+/**
+ * Xóa tài khoản nhân viên (chỉ admin)
+ */
+function deleteStaffAccount($staffId) {
+    $conn = connectOracle();
+    $sql = "DELETE FROM NguoiDung WHERE MaND = :mand AND VaiTro = 'nhanvien'";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":mand", $staffId);
+
+    $result = oci_execute($stmt);
+    oci_close($conn);
     return $result;
 }
 ?>
