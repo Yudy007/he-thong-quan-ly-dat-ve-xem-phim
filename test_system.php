@@ -176,10 +176,20 @@ echo "<li>Thêm phim và suất chiếu</li>";
 echo "<li>Tạo tài khoản nhân viên</li>";
 echo "<li>Khách hàng có thể tự đăng ký và đặt vé</li>";
 echo "</ol>";
+
+echo "<h3>🧪 Test từng loại tài khoản:</h3>";
+echo "<ul>";
+echo "<li><strong>Admin:</strong> <a href='create_admin.php'>Tạo admin</a> → <a href='debug_login.php'>Test login</a></li>";
+echo "<li><strong>Nhân viên:</strong> <a href='create_staff_test.php'>Tạo & test nhân viên</a></li>";
+echo "<li><strong>Khách hàng:</strong> <a href='register.php'>Đăng ký khách hàng</a></li>";
+echo "</ul>";
 echo "</div>";
 
 echo "<p style='text-align: center; margin: 30px 0;'>";
-echo "<a href='index.php' style='background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>🏠 Về trang chủ</a>";
+echo "<a href='index.php' style='background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 0 10px;'>🏠 Trang chủ</a>";
+echo "<a href='create_admin.php' style='background: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 0 10px;'>👑 Tạo Admin</a>";
+echo "<a href='create_staff_test.php' style='background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 0 10px;'>👨‍💼 Test Nhân viên</a>";
+echo "<a href='debug_login.php' style='background: #17a2b8; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 0 10px;'>🔍 Debug Login</a>";
 echo "</p>";
 ?>
 

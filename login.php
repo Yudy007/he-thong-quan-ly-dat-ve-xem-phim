@@ -14,10 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $user = loginUser($username, $password);
     
     if ($user) {
-        $_SESSION['MaND'] = $user['MaND'];
-        $_SESSION['VaiTro'] = $user['VaiTro'];
-        $_SESSION['hoTen'] = $user['hoTen'];
-        
+        $_SESSION['MaND'] = $user['MAND'];
+        $_SESSION['VaiTro'] = $user['VAITRO'];
+        $_SESSION['hoTen'] = $user['HOTEN'];
+
         header('Location: index.php');
         exit;
     } else {
