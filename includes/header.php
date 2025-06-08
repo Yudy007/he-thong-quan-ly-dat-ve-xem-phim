@@ -19,9 +19,9 @@ $hoTen = $_SESSION['hoTen'] ?? null;
                 <li><a href="<?= $base_url ?>/index.php">Trang chủ</a></li>
 
                 <?php if ($vaiTro === 'khachhang'): ?>
-                    <li><a href="<?= $base_url ?>/my_tickets.php">Vé đã đặt</a></li>
+                    <li><a href="<?= $base_url ?>/customer/my_tickets.php">Vé đã đặt</a></li>
                 <?php elseif ($vaiTro === 'nhanvien'): ?>
-                    <li><a href="<?= $base_url ?>/staff/check_ticket.php">Kiểm tra vé</a></li>
+                    <li><a href="<?= $base_url ?>/staff/ticket_checker.php">Kiểm tra vé</a></li>
                 <?php elseif ($vaiTro === 'admin'): ?>
                     <li><a href="<?= $base_url ?>/admin/manage_users.php">Quản lý người dùng</a></li>
                     <li><a href="<?= $base_url ?>/admin/manage_movies.php">Quản lý phim</a></li>

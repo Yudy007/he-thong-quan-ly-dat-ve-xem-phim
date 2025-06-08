@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/auth.php';
-require_once 'includes/functions.php';
+require_once '../includes/auth.php';
+require_once '../includes/functions.php';
 checkRole('khachhang'); // Chỉ khách hàng mới được đặt vé
 
 $conn = connectOracle();
@@ -15,8 +15,8 @@ $tenPhim = null;
 $success = false;
 
 if ($phimId) {
-    $suatChieus = getSuatChieuByPhim($phimId);
-    $tenPhim = getTenPhimById($phimId);
+    $suatChieus = getSchedules($phimId);
+    $tenPhim = getMovieNameById($phimId); // Cần có hàm này trong functions.php
 }
 
 if ($suatChieuId) {
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['maGhe']) && $suatChie
     $maNguoiDung = $_SESSION['MaND'];
     $maGhe = $_POST['maGhe'];
 
-    if (insertVe($suatChieuId, $maGhe, $maNguoiDung)) {
+    if (bookTicket($maNguoiDung, $suatChieuId, [$maGhe])) {
         $success = true;
         $gheTrong = getAvailableSeats($suatChieuId); // Cập nhật lại ghế
     } else {
@@ -42,11 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['maGhe']) && $suatChie
 <head>
     <meta charset="UTF-8">
     <title>Đặt vé xem phim</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
 
-<?php include 'includes/header.php'; ?>
+<?php include '../includes/header.php'; ?>
 
 <div class="container">
     <h2>🎟️ Đặt vé xem phim</h2>
@@ -95,6 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['maGhe']) && $suatChie
     <?php endif; ?>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>
 </body>
 </html>

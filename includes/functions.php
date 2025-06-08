@@ -247,6 +247,18 @@ function getUsers() {
     return $users;
 }
 
+function getMovieNameById($movieId) {
+    $conn = connectOracle();
+    $sql = "SELECT TenPhim FROM Phim WHERE MaPhim = :id";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":id", $movieId);
+    oci_execute($stmt);
+    $row = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+    oci_close($conn);
+    return $row['TENPHIM'] ?? null;
+}
+
 /**
  * Lấy thông tin người dùng bằng ID
  */

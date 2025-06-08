@@ -86,15 +86,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <tbody>
                 <?php foreach ($users as $user): ?>
                     <tr>
-                        <td><?= htmlspecialchars($user['MA_ND']) ?></td>
-                        <td><?= htmlspecialchars($user['TEN_DANG_NHAP']) ?></td>
-                        <td><?= htmlspecialchars($user['HO_TEN']) ?></td>
-                        <td><?= $user['VAI_TRO'] ?></td>
+                        <td><?= htmlspecialchars($user['MAND']) ?></td>
+                        <td><?= htmlspecialchars($user['TENDANGNHAP']) ?></td>
+                        <td><?= htmlspecialchars($user['HOTEN']) ?></td>
+                        <td><?= $user['VAITRO'] ?></td>
                         <td><?= htmlspecialchars($user['EMAIL']) ?></td>
                         <td><?= htmlspecialchars($user['SDT']) ?></td>
                         <td>
                             <form method="POST" onsubmit="return confirm('Xoá người dùng này?');" style="display:inline;">
-                                <input type="hidden" name="MaND" value="<?= $user['MA_ND'] ?>">
+                                <input type="hidden" name="MaND" value="<?= $user['MAND'] ?>">
                                 <button type="submit" name="delete_user" class="btn-delete">Xoá</button>
                             </form>
                             <!-- Có thể tách sửa sang edit_user.php nếu cần -->
