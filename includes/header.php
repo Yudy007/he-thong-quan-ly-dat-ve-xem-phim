@@ -19,9 +19,12 @@ $hoTen = $_SESSION['hoTen'] ?? null;
                 <li><a href="<?= $base_url ?>/index.php">Trang chủ</a></li>
 
                 <?php if ($vaiTro === 'khachhang'): ?>
+                    <li><a href="<?= $base_url ?>/customer/home.php">Home</a></li>
                     <li><a href="<?= $base_url ?>/customer/my_tickets.php">Vé đã đặt</a></li>
                 <?php elseif ($vaiTro === 'nhanvien'): ?>
                     <li><a href="<?= $base_url ?>/staff/ticket_checker.php">Kiểm tra vé</a></li>
+                    <li><a href="<?= $base_url ?>/staff/seat_adjust.php">Kiểm tra chỗ ngồi</a></li>
+                    <li><a href="<?= $base_url ?>/staff/dashboard.php">Báo cáo</a></li>
                 <?php elseif ($vaiTro === 'admin'): ?>
                     <li><a href="<?= $base_url ?>/admin/manage_users.php">Quản lý người dùng</a></li>
                     <li><a href="<?= $base_url ?>/admin/manage_movies.php">Quản lý phim</a></li>

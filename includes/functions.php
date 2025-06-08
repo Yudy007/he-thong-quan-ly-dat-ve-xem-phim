@@ -1,650 +1,378 @@
 <?php
 require_once 'db_connect.php';
 
-/**
- * Đăng nhập người dùng
- * @param string $username
- * @param string $password
- * @return array|false
- */
+/** =========================
+ * QUẢN LÝ NGƯỜI DÙNG
+ * ========================= */
+
 function loginUser($username, $password) {
     $conn = connectOracle();
-    $sql = "SELECT * FROM NguoiDung WHERE TenDangNhap = :username AND MatKhau = :password";
-    $stmt = oci_parse($conn, $sql);
-    oci_bind_by_name($stmt, ":username", $username);
-    oci_bind_by_name($stmt, ":password", $password);
+    $stmt = oci_parse($conn, "SELECT * FROM NGUOIDUNG WHERE TENDANGNHAP = :username AND MATKHAU = :password");
+    oci_bind_by_name($stmt, ':username', $username);
+    oci_bind_by_name($stmt, ':password', $password);
     oci_execute($stmt);
-    $result = oci_fetch_assoc($stmt);
-    oci_free_statement($stmt);
-    oci_close($conn);
-    return $result ?: false;
+    return oci_fetch_assoc($stmt) ?: false;
 }
 
-/**
- * Đăng ký tài khoản người dùng mới
- * @param array $data
- * @return bool
- */
 function registerUser($data) {
     $conn = connectOracle();
-    $sql = "INSERT INTO NguoiDung (MaND, TenDangNhap, MatKhau, HoTen, VaiTro) 
-            VALUES (:mand, :tendn, :matkhau, :hoten, 'khachhang')";
-    $stmt = oci_parse($conn, $sql);
-    $data['MaND'] = uniqid("ND");
-    oci_bind_by_name($stmt, ":mand", $data['MaND']);
-    oci_bind_by_name($stmt, ":tendn", $data['TenDangNhap']);
-    oci_bind_by_name($stmt, ":matkhau", $data['MatKhau']);
-    oci_bind_by_name($stmt, ":hoten", $data['HoTen']);
-    $success = oci_execute($stmt);
-    oci_free_statement($stmt);
-    oci_close($conn);
-    return $success;
+    $stmt = oci_parse($conn, 
+        "INSERT INTO NGUOIDUNG (MAND, TENDANGNHAP, MATKHAU, HOTEN, VAITRO, EMAIL, SDT)
+         VALUES (:ma_nd, :username, :password, :fullname, 'khachhang', :email, :sdt)");
+    
+    $data['ma_nd'] = uniqid("ND");
+    $data['password'] = md5($data['MAT_KHAU']);
+    
+    oci_bind_by_name($stmt, ':ma_nd', $data['ma_nd']);
+    oci_bind_by_name($stmt, ':username', $data['TENDANGNHAP']);
+    oci_bind_by_name($stmt, ':password', $data['password']);
+    oci_bind_by_name($stmt, ':fullname', $data['HOTEN']);
+    oci_bind_by_name($stmt, ':email', $data['EMAIL']);
+    oci_bind_by_name($stmt, ':sdt', $data['SDT']);
+    
+    return oci_execute($stmt);
 }
 
-/**
- * Lấy danh sách phim đang chiếu
- * @return array
- */
-function getAllMovies() {
-    $conn = connectOracle();
-    $sql = "SELECT * FROM Phim WHERE TrangThai = 'dang_chieu'";
-    $stmt = oci_parse($conn, $sql);
-    oci_execute($stmt);
-    $movies = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $movies[] = $row;
+function getUsers() {
+    return fetchAll("SELECT * FROM NGUOIDUNG ORDER BY VAITRO, MAND");
+}
+
+function getUserById($ma_nd) {
+    return fetchSingle("SELECT * FROM NGUOIDUNG WHERE MAND = :ma_nd", [':ma_nd' => $ma_nd]);
+}
+
+function updateUser($data) {
+    $passwordClause = !empty($data['MATKHAU']) ? "MATKHAU = :mat_khau," : "";
+    
+    $sql = "UPDATE NGUOIDUNG SET 
+                TENDANGNHAP = :ten_dang_nhap,
+                $passwordClause
+                HOTEN = :ho_ten,
+                VAITRO = :vai_tro,
+                EMAIL = :email,
+                SDT = :sdt
+            WHERE MAND = :ma_nd";
+    
+    $params = [
+        ':ma_nd' => $data['MAND'],
+        ':ten_dang_nhap' => $data['TENDANGNHAP'],
+        ':ho_ten' => $data['HOTEN'],
+        ':vai_tro' => $data['VAITRO'],
+        ':email' => $data['EMAIL'],
+        ':sdt' => $data['SDT']
+    ];
+    
+    if (!empty($data['MATKHAU'])) {
+        $params[':mat_khau'] = md5($data['MATKHAU']);
     }
-    oci_free_statement($stmt);
-    oci_close($conn);
-    return $movies;
+    
+    return executeQuery($sql, $params);
 }
 
-/**
- * Lấy danh sách suất chiếu theo mã phim
- * @param string $movieId
- * @return array
- */
-function getSchedules($movieId) {
-    $conn = connectOracle();
-    $sql = "SELECT * FROM SuatChieu WHERE MaPhim = :maphim";
-    $stmt = oci_parse($conn, $sql);
-    oci_bind_by_name($stmt, ":maphim", $movieId);
-    oci_execute($stmt);
-    $schedules = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $schedules[] = $row;
+function deleteUser($ma_nd) {
+    return executeQuery("DELETE FROM NGUOIDUNG WHERE MAND = :ma_nd", [':ma_nd' => $ma_nd]);
+}
+
+/** =========================
+ * QUẢN LÝ PHIM
+ * ========================= */
+
+function getAllMovies($status = null) {
+    $sql = "SELECT * FROM PHIM";
+    $params = [];
+    
+    if ($status) {
+        $sql .= " WHERE TRANGTHAI = :status";
+        $params[':status'] = $status;
     }
-    oci_free_statement($stmt);
-    oci_close($conn);
-    return $schedules;
+    
+    $sql .= " ORDER BY TENPHIM";
+    return fetchAll($sql, $params);
 }
 
-/**
- * Lấy danh sách ghế chưa được đặt cho 1 suất chiếu
- * @param string $scheduleId
- * @return array
- */
+function getTenPhimById($maPhim) {
+    $result = fetchSingle("SELECT TENPHIM FROM PHIM WHERE MAPHIM = :maPhim", [':maPhim' => $maPhim]);
+    return $result['TENPHIM'] ?? null;
+}
+
+function insertMovie($data) {
+    return executeQuery(
+        "INSERT INTO PHIM (MAPHIM, TENPHIM, THELOAI, THOILUONG, MOTA, TRANGTHAI)
+         VALUES (:ma, :ten, :tl, :thoiluong, :mota, :tt)", 
+        [
+            ':ma' => $data['MaPhim'],
+            ':ten' => $data['TenPhim'],
+            ':tl' => $data['TheLoai'],
+            ':thoiluong' => $data['ThoiLuong'],
+            ':mota' => $data['MoTa'],
+            ':tt' => $data['TrangThai']
+        ]
+    );
+}
+
+function updateMovie($data) {
+    return executeQuery(
+        "UPDATE PHIM SET TENPHIM = :ten, THELOAI = :tl, THOILUONG = :thoiluong, 
+         MOTA = :mota, TRANGTHAI = :tt WHERE MAPHIM = :ma",
+        [
+            ':ma' => $data['MaPhim'],
+            ':ten' => $data['TenPhim'],
+            ':tl' => $data['TheLoai'],
+            ':thoiluong' => $data['ThoiLuong'],
+            ':mota' => $data['MoTa'],
+            ':tt' => $data['TrangThai']
+        ]
+    );
+}
+
+function deleteMovie($maPhim) {
+    return executeQuery("DELETE FROM PHIM WHERE MAPHIM = :ma", [':ma' => $maPhim]);
+}
+
+/** =========================
+ * QUẢN LÝ SUẤT CHIẾU
+ * ========================= */
+
+function getSchedules($movieId = null) {
+    $sql = "SELECT sc.*, p.TENPHIM, pc.TENPHONG FROM SUATCHIEU sc
+            JOIN PHIM p ON sc.MAPHIM = p.MAPHIM
+            JOIN PHONGCHIEU pc ON sc.MAPHONG = pc.MAPHONG";
+    
+    $params = [];
+    if ($movieId) {
+        $sql .= " WHERE sc.MAPHIM = :maphim";
+        $params[':maphim'] = $movieId;
+    }
+    
+    $sql .= " ORDER BY sc.THOIGIANBATDAU";
+    return fetchAll($sql, $params);
+}
+
+function insertSchedule($data) {
+    return executeQuery(
+        "INSERT INTO SUATCHIEU (MASUAT, MAPHIM, MAPHONG, THOIGIANBATDAU, THOIGIANKETTHUC, GIAVE)
+         VALUES (:MaSuat, :MaPhim, :MaPhong, TO_DATE(:BatDau, 'YYYY-MM-DD\"T\"HH24:MI'), 
+                TO_DATE(:KetThuc, 'YYYY-MM-DD\"T\"HH24:MI'), :GiaVe)",
+        [
+            ':MaSuat' => $data['MaSuat'],
+            ':MaPhim' => $data['MaPhim'],
+            ':MaPhong' => $data['MaPhong'],
+            ':BatDau' => $data['ThoiGianBatDau'],
+            ':KetThuc' => $data['ThoiGianKetThuc'],
+            ':GiaVe' => $data['GiaVe']
+        ]
+    );
+}
+
+function deleteSchedule($maSuat) {
+    return executeQuery("DELETE FROM SUATCHIEU WHERE MASUAT = :MaSuat", [':MaSuat' => $maSuat]);
+}
+
+/** =========================
+ * QUẢN LÝ PHÒNG CHIẾU & GHẾ
+ * ========================= */
+
+function getRooms() {
+    return fetchAll("SELECT * FROM PHONGCHIEU ORDER BY MAPHONG");
+}
+
+function addRoom($data) {
+    return executeQuery(
+        "INSERT INTO PHONGCHIEU (MAPHONG, TENPHONG, SOLUONGGHE) 
+         VALUES (:maphong, :tenphong, :soluongghe)",
+        [
+            ':maphong' => $data['MaPhong'],
+            ':tenphong' => $data['TenPhong'],
+            ':soluongghe' => $data['SoLuongGhe']
+        ]
+    );
+}
+
+function getSeatsByRoom($roomId) {
+    return fetchAll(
+        "SELECT * FROM GHE WHERE MAPHONG = :maphong ORDER BY SOGHE",
+        [':maphong' => $roomId]
+    );
+}
+
 function getAvailableSeats($scheduleId) {
-    $conn = connectOracle();
-    $sql = "SELECT Ghe.*
-            FROM Ghe
-            JOIN PhongChieu ON Ghe.MaPhong = PhongChieu.MaPhong
-            JOIN SuatChieu ON SuatChieu.MaPhong = PhongChieu.MaPhong
-            WHERE SuatChieu.MaSuat = :masuat
-            AND Ghe.MaGhe NOT IN (
-                SELECT MaGhe FROM Ve WHERE MaSuat = :masuat AND TrangThai IN ('da_dat', 'da_kiem_tra')
-            )";
-    $stmt = oci_parse($conn, $sql);
-    oci_bind_by_name($stmt, ":masuat", $scheduleId);
-    oci_execute($stmt);
-    $seats = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $seats[] = $row;
-    }
-    oci_free_statement($stmt);
-    oci_close($conn);
-    return $seats;
+    return fetchAll(
+        "SELECT g.* FROM GHE g
+         JOIN PHONGCHIEU pc ON g.MAPHONG = pc.MAPHONG
+         JOIN SUATCHIEU sc ON sc.MAPHONG = pc.MAPHONG
+         WHERE sc.MASUAT = :masuat
+           AND g.MAGHE NOT IN (
+               SELECT MAGHE FROM VE 
+               WHERE MASUAT = :masuat AND TRANGTHAI IN ('da_dat', 'da_kiem_tra')
+           )",
+        [':masuat' => $scheduleId]
+    );
 }
 
-/**
- * Đặt vé
- * @param string $userId
- * @param string $scheduleId
- * @param array $seatList
- * @return bool
- */
-function bookTicket($userId, $scheduleId, $seatList) {
-    $conn = connectOracle();
-    $success = true;
+/** =========================
+ * QUẢN LÝ VÉ
+ * ========================= */
 
-    foreach ($seatList as $seatId) {
-        $sql = "INSERT INTO Ve (MaVe, MaSuat, MaGhe, MaNguoiDung, ThoiGianDat, TrangThai)
-                VALUES (:mave, :masuat, :maghe, :mand, SYSDATE, 'da_dat')";
-        $stmt = oci_parse($conn, $sql);
-        $maVe = uniqid("V");
-        oci_bind_by_name($stmt, ":mave", $maVe);
-        oci_bind_by_name($stmt, ":masuat", $scheduleId);
-        oci_bind_by_name($stmt, ":maghe", $seatId);
-        oci_bind_by_name($stmt, ":mand", $userId);
-        $exec = oci_execute($stmt, OCI_NO_AUTO_COMMIT);
-        if (!$exec) {
-            $success = false;
-            break;
-        }
-        oci_free_statement($stmt);
-    }
-
-    if ($success) {
-        oci_commit($conn);
-    } else {
-        oci_rollback($conn);
-    }
-
-    oci_close($conn);
-    return $success;
+function insertVe($maSuat, $maGhe, $maNguoiDung) {
+    return executeQuery(
+        "INSERT INTO VE (MAVE, MASUAT, MAGHE, MANGUOIDUNG, THOIGIANDAT, TRANGTHAI)
+         VALUES (:mave, :masuat, :maghe, :mand, SYSDATE, 'da_dat')",
+        [
+            ':mave' => uniqid("V"),
+            ':masuat' => $maSuat,
+            ':maghe' => $maGhe,
+            ':mand' => $maNguoiDung
+        ]
+    );
 }
 
-/**
- * Lấy danh sách vé đã đặt của người dùng
- * @param string $userId
- * @return array
- */
-function getMyTickets($userId) {
-    $conn = connectOracle();
-    $sql = "SELECT Ve.*, Phim.TenPhim, SuatChieu.ThoiGianBatDau, Ghe.SoGhe
-            FROM Ve
-            JOIN SuatChieu ON Ve.MaSuat = SuatChieu.MaSuat
-            JOIN Phim ON SuatChieu.MaPhim = Phim.MaPhim
-            JOIN Ghe ON Ve.MaGhe = Ghe.MaGhe
-            WHERE Ve.MaNguoiDung = :mand";
-    $stmt = oci_parse($conn, $sql);
-    oci_bind_by_name($stmt, ":mand", $userId);
-    oci_execute($stmt);
-    $tickets = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $tickets[] = $row;
-    }
-    oci_free_statement($stmt);
-    oci_close($conn);
-    return $tickets;
+function getMyTickets($maNguoiDung) {
+    return fetchAll(
+        "SELECT v.MAVE, p.TENPHIM, sc.THOIGIANBATDAU, sc.THOIGIANKETTHUC, 
+                g.SOGHE, g.LOAIGHE, pc.TENPHONG, sc.GIAVE, v.TRANGTHAI
+         FROM VE v
+         JOIN SUATCHIEU sc ON v.MASUAT = sc.MASUAT
+         JOIN PHIM p ON sc.MAPHIM = p.MAPHIM
+         JOIN GHE g ON v.MAGHE = g.MAGHE
+         JOIN PHONGCHIEU pc ON g.MAPHONG = pc.MAPHONG
+         WHERE v.MANGUOIDUNG = :mand
+         ORDER BY sc.THOIGIANBATDAU DESC",
+        [':mand' => $maNguoiDung]
+    );
 }
 
-/**
- * Kiểm tra và xác nhận vé
- * @param string $ticketCode
- * @return string
- */
-function checkTicket($ticketCode) {
+function checkTicket($maVe) {
     $conn = connectOracle();
-    $sql = "SELECT TrangThai FROM Ve WHERE MaVe = :mave";
-    $stmt = oci_parse($conn, $sql);
-    oci_bind_by_name($stmt, ":mave", $ticketCode);
+    
+    // Kiểm tra vé
+    $stmt = oci_parse($conn, "SELECT TRANGTHAI FROM VE WHERE MAVE = :mave");
+    oci_bind_by_name($stmt, ":mave", $maVe);
     oci_execute($stmt);
     $row = oci_fetch_assoc($stmt);
-
+    
     if (!$row) {
         oci_close($conn);
-        return "Vé không tồn tại.";
+        return "❌ Mã vé không tồn tại.";
     }
-
+    
     if ($row['TRANGTHAI'] === 'da_kiem_tra') {
         oci_close($conn);
-        return "Vé đã được kiểm tra trước đó.";
+        return "⚠️ Vé đã được kiểm tra trước đó.";
     }
-
-    $update = oci_parse($conn, "UPDATE Ve SET TrangThai = 'da_kiem_tra' WHERE MaVe = :mave");
-    oci_bind_by_name($update, ":mave", $ticketCode);
-    oci_execute($update);
-    oci_free_statement($update);
+    
+    // Cập nhật trạng thái
+    $update = oci_parse($conn, "UPDATE VE SET TRANGTHAI = 'da_kiem_tra' WHERE MAVE = :mave");
+    oci_bind_by_name($update, ":mave", $maVe);
+    $result = oci_execute($update);
+    
     oci_close($conn);
-    return "Vé hợp lệ – cho phép vào rạp.";
+    return $result ? "✅ Vé hợp lệ – Cho phép vào rạp." : "❌ Có lỗi xảy ra khi cập nhật vé.";
 }
 
-/**
- * Thống kê số vé theo phim
- * @return array
- */
+/** =========================
+ * THỐNG KÊ
+ * ========================= */
+
 function getStats() {
+    return fetchAll(
+        "SELECT p.TENPHIM, COUNT(*) AS SOVE, SUM(sc.GIAVE) AS DOANHTHU
+         FROM VE v
+         JOIN SUATCHIEU sc ON v.MASUAT = sc.MASUAT
+         JOIN PHIM p ON sc.MAPHIM = p.MAPHIM
+         WHERE v.TRANGTHAI IN ('da_dat', 'da_kiem_tra')
+         GROUP BY p.TENPHIM
+         ORDER BY SOVE DESC"
+    );
+}
+
+function getAdminStats() {
     $conn = connectOracle();
-    $sql = "SELECT Phim.TenPhim, COUNT(*) AS SoVe, SUM(SuatChieu.GiaVe) AS DoanhThu
-            FROM Ve
-            JOIN SuatChieu ON Ve.MaSuat = SuatChieu.MaSuat
-            JOIN Phim ON SuatChieu.MaPhim = Phim.MaPhim
-            GROUP BY Phim.TenPhim";
-    $stmt = oci_parse($conn, $sql);
-    oci_execute($stmt);
-    $stats = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $stats[] = $row;
-    }
-    oci_free_statement($stmt);
+    
+    $stats = [
+        'total_movies' => fetchSingleValue("SELECT COUNT(*) FROM PHIM", $conn),
+        'total_tickets' => fetchSingleValue(
+            "SELECT COUNT(*) FROM VE WHERE TRANGTHAI IN ('da_dat', 'da_kiem_tra')", 
+            $conn
+        ),
+        'monthly_revenue' => fetchSingleValue(
+            "SELECT SUM(sc.GIAVE) FROM VE v 
+             JOIN SUATCHIEU sc ON v.MASUAT = sc.MASUAT 
+             WHERE EXTRACT(MONTH FROM v.THOIGIANDAT) = EXTRACT(MONTH FROM SYSDATE)
+               AND EXTRACT(YEAR FROM v.THOIGIANDAT) = EXTRACT(YEAR FROM SYSDATE)
+               AND v.TRANGTHAI IN ('da_dat', 'da_kiem_tra')", 
+            $conn
+        ) ?? 0,
+        'total_users' => fetchSingleValue("SELECT COUNT(*) FROM NGUOIDUNG", $conn)
+    ];
+    
     oci_close($conn);
     return $stats;
 }
 
-// manage_users.php
-
-/**
- * Lấy danh sách tất cả người dùng
- */
-function getUsers() {
-    $conn = connectOracle();
-    $query = "SELECT MAND, TENDANGNHAP, HOTEN, VAITRO, EMAIL, SDT 
-              FROM NGUOIDUNG 
-              ORDER BY VAITRO, MAND";
-    
-    $stid = oci_parse($conn, $query);
-    oci_execute($stid);
-    
-    $users = [];
-    while ($row = oci_fetch_assoc($stid)) {
-        $users[] = $row;
-    }
-    
-    oci_free_statement($stid);
-    oci_close($conn);
-    
-    return $users;
+function getRecentActivities($limit = 10) {
+    return fetchAll(
+        "SELECT v.THOIGIANDAT AS THOIGIAN, nd.HOTEN, 'Đặt vé' AS HOATDONG, p.TENPHIM AS CHITIET
+         FROM VE v
+         JOIN NGUOIDUNG nd ON v.MANGUOIDUNG = nd.MAND
+         JOIN SUATCHIEU sc ON v.MASUAT = sc.MASUAT
+         JOIN PHIM p ON sc.MAPHIM = p.MAPHIM
+         ORDER BY v.THOIGIANDAT DESC
+         FETCH FIRST :limit ROWS ONLY",
+        [':limit' => $limit]
+    );
 }
 
-function getMovieNameById($movieId) {
+/** =========================
+ * HÀM HỖ TRỢ
+ * ========================= */
+
+function fetchAll($sql, $params = []) {
     $conn = connectOracle();
-    $sql = "SELECT TenPhim FROM Phim WHERE MaPhim = :id";
     $stmt = oci_parse($conn, $sql);
-    oci_bind_by_name($stmt, ":id", $movieId);
+    
+    foreach ($params as $key => $value) {
+        oci_bind_by_name($stmt, $key, $value);
+    }
+    
+    oci_execute($stmt);
+    $results = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $results[] = $row;
+    }
+    
+    oci_close($conn);
+    return $results;
+}
+
+function fetchSingle($sql, $params = []) {
+    $results = fetchAll($sql, $params);
+    return $results[0] ?? null;
+}
+
+function fetchSingleValue($sql, $conn = null) {
+    $shouldClose = ($conn === null);
+    $conn = $conn ?: connectOracle();
+    
+    $stmt = oci_parse($conn, $sql);
     oci_execute($stmt);
     $row = oci_fetch_assoc($stmt);
-    oci_free_statement($stmt);
-    oci_close($conn);
-    return $row['TENPHIM'] ?? null;
-}
-
-/**
- * Lấy thông tin người dùng bằng ID
- */
-function getUserById($ma_nd) {
-    $conn = connectOracle();
-    $query = "SELECT MA_ND, TEN_DANG_NHAP, HO_TEN, VAI_TRO, EMAIL, SDT 
-              FROM NGUOIDUNG 
-              WHERE MA_ND = :ma_nd";
     
-    $stid = oci_parse($conn, $query);
-    oci_bind_by_name($stid, ':ma_nd', $ma_nd);
-    oci_execute($stid);
-    
-    $user = oci_fetch_assoc($stid);
-    
-    oci_free_statement($stid);
-    oci_close($conn);
-    
-    return $user;
-}
-
-/**
- * Thêm người dùng mới
- */
-function insertUser($data) {
-    $conn = connectOracle();
-    
-    // Mã hóa mật khẩu (trong thực tế nên sử dụng password_hash())
-    $hashed_password = md5($data['mat_khau']);
-    
-    $query = "INSERT INTO NGUOIDUNG (
-                TEN_DANG_NHAP, 
-                MAT_KHAU, 
-                HO_TEN, 
-                VAI_TRO, 
-                EMAIL, 
-                SDT
-              ) VALUES (
-                :ten_dang_nhap, 
-                :mat_khau, 
-                :ho_ten, 
-                :vai_tro, 
-                :email, 
-                :sdt
-              )";
-    
-    $stid = oci_parse($conn, $query);
-    
-    oci_bind_by_name($stid, ':ten_dang_nhap', $data['ten_dang_nhap']);
-    oci_bind_by_name($stid, ':mat_khau', $hashed_password);
-    oci_bind_by_name($stid, ':ho_ten', $data['ho_ten']);
-    oci_bind_by_name($stid, ':vai_tro', $data['vai_tro']);
-    oci_bind_by_name($stid, ':email', $data['email']);
-    oci_bind_by_name($stid, ':sdt', $data['sdt']);
-    
-    $result = oci_execute($stid);
-    
-    oci_free_statement($stid);
-    oci_close($conn);
-    
-    return $result;
-}
-
-/**
- * Cập nhật thông tin người dùng
- */
-function updateUser($data) {
-    $conn = connectOracle();
-    
-    // Xây dựng câu lệnh SQL tùy thuộc vào việc có cập nhật mật khẩu hay không
-    $password_clause = '';
-    if (isset($data['mat_khau']) && !empty($data['mat_khau'])) {
-        $hashed_password = md5($data['mat_khau']);
-        $password_clause = "MAT_KHAU = :mat_khau,";
+    if ($shouldClose) {
+        oci_close($conn);
     }
     
-    $query = "UPDATE NGUOIDUNG SET
-                TEN_DANG_NHAP = :ten_dang_nhap,
-                {$password_clause}
-                HO_TEN = :ho_ten,
-                VAI_TRO = :vai_tro,
-                EMAIL = :email,
-                SDT = :sdt
-              WHERE MA_ND = :ma_nd";
-    
-    $stid = oci_parse($conn, $query);
-    
-    oci_bind_by_name($stid, ':ma_nd', $data['ma_nd']);
-    oci_bind_by_name($stid, ':ten_dang_nhap', $data['ten_dang_nhap']);
-    oci_bind_by_name($stid, ':ho_ten', $data['ho_ten']);
-    oci_bind_by_name($stid, ':vai_tro', $data['vai_tro']);
-    oci_bind_by_name($stid, ':email', $data['email']);
-    oci_bind_by_name($stid, ':sdt', $data['sdt']);
-    
-    if (isset($hashed_password)) {
-        oci_bind_by_name($stid, ':mat_khau', $hashed_password);
-    }
-    
-    $result = oci_execute($stid);
-    
-    oci_free_statement($stid);
-    oci_close($conn);
-    
-    return $result;
+    return $row ? reset($row) : null;
 }
 
-/**
- * Xóa người dùng
- */
-function deleteUser($ma_nd) {
+function executeQuery($sql, $params = []) {
     $conn = connectOracle();
-
-    $query = "DELETE FROM NGUOIDUNG WHERE MA_ND = :ma_nd";
-
-    $stid = oci_parse($conn, $query);
-    oci_bind_by_name($stid, ':ma_nd', $ma_nd);
-
-    $result = oci_execute($stid);
-
-    oci_free_statement($stid);
-    oci_close($conn);
-
-    return $result;
-}
-
-// ===== THÊM CÁC HÀM MỚI CHO HỆ THỐNG =====
-
-/**
- * Lấy thống kê cho admin dashboard
- */
-function getAdminStats() {
-    $conn = connectOracle();
-
-    // Tổng số phim
-    $stmt1 = oci_parse($conn, "SELECT COUNT(*) as total FROM Phim");
-    oci_execute($stmt1);
-    $total_movies = oci_fetch_assoc($stmt1)['TOTAL'];
-
-    // Tổng số vé đã bán
-    $stmt2 = oci_parse($conn, "SELECT COUNT(*) as total FROM Ve WHERE TrangThai IN ('da_dat', 'da_kiem_tra')");
-    oci_execute($stmt2);
-    $total_tickets = oci_fetch_assoc($stmt2)['TOTAL'];
-
-    // Doanh thu tháng này
-    $stmt3 = oci_parse($conn, "SELECT SUM(sc.GiaVe) as revenue FROM Ve v JOIN SuatChieu sc ON v.MaSuat = sc.MaSuat WHERE EXTRACT(MONTH FROM v.ThoiGianDat) = EXTRACT(MONTH FROM SYSDATE) AND EXTRACT(YEAR FROM v.ThoiGianDat) = EXTRACT(YEAR FROM SYSDATE)");
-    oci_execute($stmt3);
-    $monthly_revenue = oci_fetch_assoc($stmt3)['REVENUE'] ?? 0;
-
-    // Tổng số người dùng
-    $stmt4 = oci_parse($conn, "SELECT COUNT(*) as total FROM NguoiDung");
-    oci_execute($stmt4);
-    $total_users = oci_fetch_assoc($stmt4)['TOTAL'];
-
-    oci_close($conn);
-
-    return [
-        'total_movies' => $total_movies,
-        'total_tickets' => $total_tickets,
-        'monthly_revenue' => $monthly_revenue,
-        'total_users' => $total_users
-    ];
-}
-
-/**
- * Lấy hoạt động gần đây
- */
-function getRecentActivities() {
-    $conn = connectOracle();
-    $sql = "SELECT v.ThoiGianDat as ThoiGian, nd.HoTen, 'Đặt vé' as HoatDong, p.TenPhim as ChiTiet
-            FROM Ve v
-            JOIN NguoiDung nd ON v.MaNguoiDung = nd.MaND
-            JOIN SuatChieu sc ON v.MaSuat = sc.MaSuat
-            JOIN Phim p ON sc.MaPhim = p.MaPhim
-            ORDER BY v.ThoiGianDat DESC
-            FETCH FIRST 10 ROWS ONLY";
-
     $stmt = oci_parse($conn, $sql);
-    oci_execute($stmt);
-
-    $activities = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $activities[] = $row;
+    
+    foreach ($params as $key => $value) {
+        oci_bind_by_name($stmt, $key, $value);
     }
-
-    oci_close($conn);
-    return $activities;
-}
-
-/**
- * Lấy suất chiếu hôm nay cho nhân viên
- */
-function getTodaySchedules() {
-    $conn = connectOracle();
-    $sql = "SELECT sc.*, p.TenPhim, pc.TenPhong,
-                   (SELECT COUNT(*) FROM Ghe WHERE MaPhong = sc.MaPhong) as TongGhe,
-                   (SELECT COUNT(*) FROM Ghe g WHERE g.MaPhong = sc.MaPhong
-                    AND g.MaGhe NOT IN (SELECT MaGhe FROM Ve WHERE MaSuat = sc.MaSuat AND TrangThai IN ('da_dat', 'da_kiem_tra'))) as GheTrong
-            FROM SuatChieu sc
-            JOIN Phim p ON sc.MaPhim = p.MaPhim
-            JOIN PhongChieu pc ON sc.MaPhong = pc.MaPhong
-            WHERE TRUNC(sc.ThoiGianBatDau) = TRUNC(SYSDATE)
-            ORDER BY sc.ThoiGianBatDau";
-
-    $stmt = oci_parse($conn, $sql);
-    oci_execute($stmt);
-
-    $schedules = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $schedules[] = $row;
-    }
-
-    oci_close($conn);
-    return $schedules;
-}
-
-/**
- * Lấy danh sách phòng chiếu
- */
-function getRooms() {
-    $conn = connectOracle();
-    $sql = "SELECT * FROM PhongChieu ORDER BY MaPhong";
-    $stmt = oci_parse($conn, $sql);
-    oci_execute($stmt);
-
-    $rooms = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $rooms[] = $row;
-    }
-
-    oci_close($conn);
-    return $rooms;
-}
-
-/**
- * Thêm phòng chiếu mới
- */
-function addRoom($data) {
-    $conn = connectOracle();
-    $sql = "INSERT INTO PhongChieu (MaPhong, TenPhong, SoLuongGhe) VALUES (:maphong, :tenphong, :soluongghe)";
-    $stmt = oci_parse($conn, $sql);
-
-    oci_bind_by_name($stmt, ":maphong", $data['MaPhong']);
-    oci_bind_by_name($stmt, ":tenphong", $data['TenPhong']);
-    oci_bind_by_name($stmt, ":soluongghe", $data['SoLuongGhe']);
-
+    
     $result = oci_execute($stmt);
     oci_close($conn);
     return $result;
 }
-
-/**
- * Lấy danh sách ghế theo phòng
- */
-function getSeatsByRoom($roomId) {
-    $conn = connectOracle();
-    $sql = "SELECT * FROM Ghe WHERE MaPhong = :maphong ORDER BY SoGhe";
-    $stmt = oci_parse($conn, $sql);
-    oci_bind_by_name($stmt, ":maphong", $roomId);
-    oci_execute($stmt);
-
-    $seats = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $seats[] = $row;
-    }
-
-    oci_close($conn);
-    return $seats;
-}
-
-/**
- * Thêm ghế mới
- */
-function addSeat($data) {
-    $conn = connectOracle();
-    $sql = "INSERT INTO Ghe (MaGhe, MaPhong, SoGhe, LoaiGhe) VALUES (:maghe, :maphong, :soghe, :loaighe)";
-    $stmt = oci_parse($conn, $sql);
-
-    oci_bind_by_name($stmt, ":maghe", $data['MaGhe']);
-    oci_bind_by_name($stmt, ":maphong", $data['MaPhong']);
-    oci_bind_by_name($stmt, ":soghe", $data['SoGhe']);
-    oci_bind_by_name($stmt, ":loaighe", $data['LoaiGhe']);
-
-    $result = oci_execute($stmt);
-    oci_close($conn);
-    return $result;
-}
-
-/**
- * Tạo tài khoản nhân viên (chỉ admin mới được dùng)
- */
-function createStaffAccount($data) {
-    $conn = connectOracle();
-    $sql = "INSERT INTO NguoiDung (MaND, TenDangNhap, MatKhau, HoTen, VaiTro)
-            VALUES (:mand, :tendn, :matkhau, :hoten, 'nhanvien')";
-    $stmt = oci_parse($conn, $sql);
-
-    $data['MaND'] = uniqid("NV");
-    oci_bind_by_name($stmt, ":mand", $data['MaND']);
-    oci_bind_by_name($stmt, ":tendn", $data['TenDangNhap']);
-    oci_bind_by_name($stmt, ":matkhau", $data['MatKhau']);
-    oci_bind_by_name($stmt, ":hoten", $data['HoTen']);
-
-    $result = oci_execute($stmt);
-    oci_close($conn);
-    return $result;
-}
-
-/**
- * Lấy danh sách nhân viên (chỉ admin)
- */
-function getStaffList() {
-    $conn = connectOracle();
-    $sql = "SELECT MaND, TenDangNhap, HoTen FROM NguoiDung WHERE VaiTro = 'nhanvien' ORDER BY HoTen";
-    $stmt = oci_parse($conn, $sql);
-    oci_execute($stmt);
-
-    $staff = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $staff[] = $row;
-    }
-
-    oci_close($conn);
-    return $staff;
-}
-
-/**
- * Xóa tài khoản nhân viên (chỉ admin)
- */
-function deleteStaffAccount($staffId) {
-    $conn = connectOracle();
-    $sql = "DELETE FROM NguoiDung WHERE MaND = :mand AND VaiTro = 'nhanvien'";
-    $stmt = oci_parse($conn, $sql);
-    oci_bind_by_name($stmt, ":mand", $staffId);
-
-    $result = oci_execute($stmt);
-    oci_close($conn);
-    return $result;
-}
-
-function getAllSchedules() {
-    $conn = connectOracle();
-    $sql = "SELECT sc.*, p.TenPhim, pc.TenPhong 
-            FROM SuatChieu sc 
-            JOIN Phim p ON sc.MaPhim = p.MaPhim 
-            JOIN PhongChieu pc ON sc.MaPhong = pc.MaPhong 
-            ORDER BY sc.ThoiGianBatDau DESC";
-    $stmt = oci_parse($conn, $sql);
-    oci_execute($stmt);
-    $schedules = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $schedules[] = $row;
-    }
-    return $schedules;
-}
-
-function getAllMoviesAdmin() {
-    $conn = connectOracle();
-    $stmt = oci_parse($conn, "SELECT * FROM Phim ORDER BY TenPhim");
-    oci_execute($stmt);
-    $result = [];
-    while ($row = oci_fetch_assoc($stmt)) {
-        $result[] = $row;
-    }
-    return $result;
-}
-
-function insertSchedule($data) {
-    $conn = connectOracle();
-    $sql = "INSERT INTO SuatChieu (MaSuat, MaPhim, MaPhong, ThoiGianBatDau, ThoiGianKetThuc, GiaVe)
-            VALUES (:MaSuat, :MaPhim, :MaPhong, TO_DATE(:BatDau, 'YYYY-MM-DD\"T\"HH24:MI'), TO_DATE(:KetThuc, 'YYYY-MM-DD\"T\"HH24:MI'), :GiaVe)";
-    $stmt = oci_parse($conn, $sql);
-    oci_bind_by_name($stmt, ":MaSuat", $data['MaSuat']);
-    oci_bind_by_name($stmt, ":MaPhim", $data['MaPhim']);
-    oci_bind_by_name($stmt, ":MaPhong", $data['MaPhong']);
-    oci_bind_by_name($stmt, ":BatDau", $data['ThoiGianBatDau']);
-    oci_bind_by_name($stmt, ":KetThuc", $data['ThoiGianKetThuc']);
-    oci_bind_by_name($stmt, ":GiaVe", $data['GiaVe']);
-    return oci_execute($stmt);
-}
-
-function deleteSchedule($maSuat) {
-    $conn = connectOracle();
-    $stmt = oci_parse($conn, "DELETE FROM SuatChieu WHERE MaSuat = :MaSuat");
-    oci_bind_by_name($stmt, ":MaSuat", $maSuat);
-    return oci_execute($stmt);
-}
-
-?>
-

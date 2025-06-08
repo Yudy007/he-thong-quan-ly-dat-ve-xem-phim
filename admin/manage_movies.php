@@ -1,9 +1,9 @@
 <?php
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
+require_once '../includes/db_connect.php'; // Thêm dòng này
 checkRole('admin');
 
-$conn = connectOracle();
 $movies = getAllMovies();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -20,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         insertMovie($data);
     } elseif (isset($_POST['delete_movie'])) {
         deleteMovie($_POST['MaPhim']);
+    } elseif (isset($_POST['update_movie'])) { // Thêm phần xử lý cập nhật nếu cần
+        updateMovie($data);
     }
 
     header('Location: manage_movies.php?success=1');
@@ -33,6 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Quản lý Phim</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .status-dang_chieu { color: #2ecc71; font-weight: bold; }
+        .status-sap_chieu { color: #f39c12; font-weight: bold; }
+        .status-ngung_chieu { color: #e74c3c; font-weight: bold; }
+    </style>
 </head>
 <body>
 <?php include '../includes/header.php'; ?>
@@ -44,23 +51,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="alert success">Thao tác thành công!</div>
     <?php endif; ?>
 
-    <!-- Thêm phim -->
+    <!-- Form thêm phim -->
     <div class="admin-section">
         <h2>Thêm phim mới</h2>
-        <form method="POST" class="user-form">
-            <div class="form-row">
-                <input type="text" name="MaPhim" placeholder="Mã phim (VD: P01)" required>
-                <input type="text" name="TenPhim" placeholder="Tên phim" required>
-                <input type="text" name="TheLoai" placeholder="Thể loại">
-                <input type="number" name="ThoiLuong" placeholder="Thời lượng (phút)" required>
-            </div>
-            <div class="form-row">
-                <textarea name="MoTa" rows="3" placeholder="Mô tả phim" style="width:100%"></textarea>
-                <select name="TrangThai" required>
-                    <option value="dang_chieu">Đang chiếu</option>
-                    <option value="sap_chieu">Sắp chiếu</option>
-                    <option value="ngung_chieu">Ngừng chiếu</option>
-                </select>
+        <form method="POST" class="movie-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Mã phim</label>
+                    <input type="text" name="MaPhim" placeholder="VD: P001" required 
+                           pattern="[A-Za-z0-9]+" title="Chỉ chấp nhận chữ và số">
+                </div>
+                <div class="form-group">
+                    <label>Tên phim</label>
+                    <input type="text" name="TenPhim" required>
+                </div>
+                <div class="form-group">
+                    <label>Thể loại</label>
+                    <input type="text" name="TheLoai" required>
+                </div>
+                <div class="form-group">
+                    <label>Thời lượng (phút)</label>
+                    <input type="number" name="ThoiLuong" min="1" required>
+                </div>
+                <div class="form-group span-2">
+                    <label>Mô tả</label>
+                    <textarea name="MoTa" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Trạng thái</label>
+                    <select name="TrangThai" required>
+                        <option value="dang_chieu">Đang chiếu</option>
+                        <option value="sap_chieu">Sắp chiếu</option>
+                        <option value="ngung_chieu">Ngừng chiếu</option>
+                    </select>
+                </div>
             </div>
             <button type="submit" name="add_movie" class="btn">Thêm phim</button>
         </form>
@@ -86,12 +110,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <td><?= htmlspecialchars($movie['MAPHIM']) ?></td>
                         <td><?= htmlspecialchars($movie['TENPHIM']) ?></td>
                         <td><?= htmlspecialchars($movie['THELOAI']) ?></td>
-                        <td><?= $movie['THOILUONG'] ?> phút</td>
-                        <td><?= $movie['TRANGTHAI'] ?></td>
-                        <td>
-                            <form method="POST" onsubmit="return confirm('Xoá phim này?');" style="display:inline;">
+                        <td><?= (int)$movie['THOILUONG'] ?> phút</td>
+                        <td class="status-<?= $movie['TRANGTHAI'] ?>">
+                            <?= match($movie['TRANGTHAI']) {
+                                'dang_chieu' => 'Đang chiếu',
+                                'sap_chieu' => 'Sắp chiếu',
+                                'ngung_chieu' => 'Ngừng chiếu',
+                                default => $movie['TRANGTHAI']
+                            } ?>
+                        </td>
+                        <td class="action-buttons">
+                            <a href="edit_movie.php?id=<?= $movie['MAPHIM'] ?>" class="btn-edit">Sửa</a>
+                            <form method="POST" onsubmit="return confirm('Xóa phim này?');">
                                 <input type="hidden" name="MaPhim" value="<?= $movie['MAPHIM'] ?>">
-                                <button type="submit" name="delete_movie" class="btn-delete">Xoá</button>
+                                <button type="submit" name="delete_movie" class="btn-delete">Xóa</button>
                             </form>
                         </td>
                     </tr>

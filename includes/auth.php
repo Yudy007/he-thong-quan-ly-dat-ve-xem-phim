@@ -1,55 +1,113 @@
 <?php
 // auth.php - Kiểm tra đăng nhập và phân quyền người dùng
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start([
+        'cookie_lifetime' => 86400, // 1 ngày
+        'cookie_secure' => true,    // Chỉ gửi cookie qua HTTPS
+        'cookie_httponly' => true,  // Chống truy cập cookie bằng JS
+        'use_strict_mode' => true   // Bảo mật session ID
+    ]);
+}
+
+// Danh sách vai trò hợp lệ
+define('VALID_ROLES', ['admin', 'nhanvien', 'khachhang']);
 
 /**
- * Kiểm tra nếu người dùng chưa đăng nhập thì chuyển về login
+ * Kiểm tra trạng thái đăng nhập
+ * @throws RuntimeException Nếu session không an toàn
  */
 function checkLogin() {
+    // Kiểm tra session fixation
+    if (!isset($_SESSION['initiated'])) {
+        session_regenerate_id(true);
+        $_SESSION['initiated'] = true;
+    }
+
+    // Kiểm tra session hijacking
+    if (!isset($_SESSION['user_agent'])) {
+        $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+    } elseif ($_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT']) {
+        session_destroy();
+        throw new RuntimeException('Session không hợp lệ');
+    }
+
     if (!isset($_SESSION['MaND'])) {
-        header("Location: ../login.php");
+        header("Location: ../login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
         exit;
     }
 }
 
 /**
- * Kiểm tra nếu người dùng không có vai trò phù hợp thì chặn truy cập
- * @param string $expectedRole Vai trò yêu cầu: 'admin', 'nhanvien', 'khachhang'
+ * Kiểm tra vai trò người dùng
+ * @param string|array $expectedRole Vai trò hoặc mảng vai trò cho phép
+ * @param bool $strict True nếu yêu cầu khớp chính xác
  */
-function checkRole($expectedRole) {
+function checkRole($expectedRole, bool $strict = true) {
     checkLogin();
-    if (!isset($_SESSION['VaiTro']) || $_SESSION['VaiTro'] !== $expectedRole) {
-        header("Location: ../unauthorized.php"); // hoặc index.php nếu chưa có trang riêng
+    
+    if (!isset($_SESSION['VaiTro'])) {
+        header("Location: ../logout.php?reason=invalid_role");
         exit;
     }
-}
 
-/**
- * Kiểm tra nếu vai trò nằm trong danh sách cho phép
- * @param array $allowedRoles Mảng các vai trò cho phép
- */
-function checkRoles($allowedRoles = []) {
-    checkLogin();
-    if (!in_array($_SESSION['VaiTro'], $allowedRoles)) {
+    $currentRole = $_SESSION['VaiTro'];
+    
+    // Kiểm tra vai trò hợp lệ
+    if (!in_array($currentRole, VALID_ROLES, true)) {
+        header("Location: ../logout.php?reason=invalid_role");
+        exit;
+    }
+
+    // Xử lý cả mảng vai trò
+    if (is_array($expectedRole)) {
+        if (!in_array($currentRole, $expectedRole, true)) {
+            header("Location: ../unauthorized.php");
+            exit;
+        }
+    } 
+    // Xử lý vai trò đơn lẻ
+    elseif ($strict ? ($currentRole !== $expectedRole) : ($currentRole != $expectedRole)) {
         header("Location: ../unauthorized.php");
         exit;
     }
 }
 
 /**
- * Lấy vai trò người dùng hiện tại (admin, nhanvien, khachhang)
- * @return string|false
+ * Lấy thông tin người dùng hiện tại
+ * @return array [
+ *     'id' => string,
+ *     'role' => string,
+ *     'username' => string,
+ *     'last_active' => int
+ * ]
  */
-function currentRole() {
-    return $_SESSION['VaiTro'] ?? false;
+function currentUser(): array {
+    checkLogin();
+    return [
+        'id' => $_SESSION['MaND'] ?? null,
+        'role' => $_SESSION['VaiTro'] ?? null,
+        'username' => $_SESSION['TenDangNhap'] ?? null,
+        'last_active' => $_SESSION['last_active'] ?? null
+    ];
 }
 
 /**
- * Lấy ID người dùng hiện tại
- * @return string|false
+ * Ghi nhận hoạt động cuối cùng
  */
-function currentUserId() {
-    return $_SESSION['MaND'] ?? false;
+function updateLastActivity() {
+    if (isset($_SESSION['MaND'])) {
+        $_SESSION['last_active'] = time();
+    }
 }
-?>
+
+// Tự động cập nhật thời gian hoạt động
+updateLastActivity();
+
+// Kiểm tra timeout (30 phút không hoạt động)
+if (isset($_SESSION['last_active']) && (time() - $_SESSION['last_active'] > 1800)) {
+    session_unset();
+    session_destroy();
+    header("Location: ../login.php?reason=timeout");
+    exit;
+}

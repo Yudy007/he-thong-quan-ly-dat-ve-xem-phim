@@ -5,7 +5,7 @@ require_once '../includes/functions.php';
 // Kiểm tra quyền khách hàng
 checkRole('khachhang');
 
-$movies = getMovies();
+$movies = getAllMovies();
 $myTickets = getMyTickets($_SESSION['MaND']);
 ?>
 

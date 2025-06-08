@@ -1,24 +1,25 @@
 <?php
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
+require_once '../includes/db_connect.php'; // Thêm dòng này
 checkRole('admin');
 
 $users = getUsers();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'ten_dang_nhap' => $_POST['TenDangNhap'],
-        'mat_khau' => $_POST['MatKhau'],
-        'ho_ten' => $_POST['HoTen'],
-        'vai_tro' => $_POST['VaiTro'],
-        'email' => $_POST['Email'],
-        'sdt' => $_POST['SDT']
+        'TENDANGNHAP' => $_POST['TenDangNhap'], // Sửa thành key viết hoa
+        'MAT_KHAU' => $_POST['MatKhau'], // Key phải khớp với hàm insertUser
+        'HOTEN' => $_POST['HoTen'],
+        'VAITRO' => $_POST['VaiTro'],
+        'EMAIL' => $_POST['Email'],
+        'SDT' => $_POST['SDT']
     ];
 
     if (isset($_POST['add_user'])) {
         insertUser($data);
     } elseif (isset($_POST['update_user'])) {
-        $data['ma_nd'] = $_POST['MaND'];
+        $data['MAND'] = $_POST['MaND']; // Sửa thành key viết hoa
         updateUser($data);
     } elseif (isset($_POST['delete_user'])) {
         deleteUser($_POST['MaND']);
@@ -89,15 +90,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <td><?= htmlspecialchars($user['MAND']) ?></td>
                         <td><?= htmlspecialchars($user['TENDANGNHAP']) ?></td>
                         <td><?= htmlspecialchars($user['HOTEN']) ?></td>
-                        <td><?= $user['VAITRO'] ?></td>
+                        <td>
+                            <?= match($user['VAITRO']) {
+                                'admin' => '👑 Admin',
+                                'nhanvien' => '💼 Nhân viên',
+                                default => '🎫 Khách hàng'
+                            } ?>
+                        </td>
                         <td><?= htmlspecialchars($user['EMAIL']) ?></td>
                         <td><?= htmlspecialchars($user['SDT']) ?></td>
-                        <td>
-                            <form method="POST" onsubmit="return confirm('Xoá người dùng này?');" style="display:inline;">
+                        <td class="action-buttons">
+                            <form method="POST" onsubmit="return confirm('Xoá người dùng này?');">
                                 <input type="hidden" name="MaND" value="<?= $user['MAND'] ?>">
                                 <button type="submit" name="delete_user" class="btn-delete">Xoá</button>
                             </form>
-                            <!-- Có thể tách sửa sang edit_user.php nếu cần -->
+                            <a href="edit_user.php?id=<?= $user['MAND'] ?>" class="btn-edit">Sửa</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

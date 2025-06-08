@@ -1,29 +1,37 @@
 <?php
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
+require_once '../includes/db_connect.php';
 checkRole('admin');
 
-$schedules = getAllSchedules();
-$movies = getAllMoviesAdmin(); // Lấy tất cả phim
-$rooms = getRooms();           // Lấy danh sách phòng
+$schedules = getSchedules();
+$movies = getAllMovies();
+$rooms = getRooms();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['add_schedule'])) {
-        $data = [
-            'MaSuat' => $_POST['MaSuat'],
-            'MaPhim' => $_POST['MaPhim'],
-            'MaPhong' => $_POST['MaPhong'],
-            'ThoiGianBatDau' => $_POST['ThoiGianBatDau'],
-            'ThoiGianKetThuc' => $_POST['ThoiGianKetThuc'],
-            'GiaVe' => $_POST['GiaVe']
-        ];
-        insertSchedule($data);
-    } elseif (isset($_POST['delete_schedule'])) {
-        deleteSchedule($_POST['MaSuat']);
-    }
+    try {
+        if (isset($_POST['add_schedule'])) {
+            $data = [
+                'MaSuat' => $_POST['MaSuat'],
+                'MaPhim' => $_POST['MaPhim'],
+                'MaPhong' => $_POST['MaPhong'],
+                'ThoiGianBatDau' => $_POST['ThoiGianBatDau'],
+                'ThoiGianKetThuc' => $_POST['ThoiGianKetThuc'],
+                'GiaVe' => $_POST['GiaVe']
+            ];
+            insertSchedule($data);
+        } elseif (isset($_POST['delete_schedule'])) {
+            deleteSchedule($_POST['MaSuat']);
+        }
 
-    header('Location: manage_schedules.php?success=1');
-    exit;
+        $_SESSION['success'] = 'Thao tác thành công!';
+        header('Location: manage_schedules.php');
+        exit;
+    } catch (Exception $e) {
+        $_SESSION['error'] = 'Lỗi: ' . $e->getMessage();
+        header('Location: manage_schedules.php');
+        exit;
+    }
 }
 ?>
 
@@ -33,6 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Quản lý Suất chiếu</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .conflict-warning { color: #e74c3c; font-weight: bold; }
+        .time-cell { white-space: nowrap; }
+    </style>
 </head>
 <body>
 <?php include '../includes/header.php'; ?>
@@ -40,33 +52,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container">
     <h1>🕒 Quản lý Suất chiếu</h1>
 
-    <?php if (isset($_GET['success'])): ?>
-        <div class="alert success">Thao tác thành công!</div>
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert success"><?= $_SESSION['success'] ?></div>
+        <?php unset($_SESSION['success']); ?>
     <?php endif; ?>
 
-    <!-- Thêm suất chiếu -->
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert error"><?= $_SESSION['error'] ?></div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
+    <!-- Form thêm suất chiếu -->
     <div class="admin-section">
         <h2>Thêm suất chiếu mới</h2>
-        <form method="POST" class="user-form">
-            <div class="form-row">
-                <input type="text" name="MaSuat" placeholder="Mã suất (VD: SC01)" required>
-                <select name="MaPhim" required>
-                    <option value="">-- Chọn phim --</option>
-                    <?php foreach ($movies as $phim): ?>
-                        <option value="<?= $phim['MAPHIM'] ?>"><?= $phim['TENPHIM'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <select name="MaPhong" required>
-                    <option value="">-- Chọn phòng chiếu --</option>
-                    <?php foreach ($rooms as $room): ?>
-                        <option value="<?= $room['MAPHONG'] ?>"><?= $room['TENPHONG'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="form-row">
-                <input type="datetime-local" name="ThoiGianBatDau" required>
-                <input type="datetime-local" name="ThoiGianKetThuc" required>
-                <input type="number" name="GiaVe" placeholder="Giá vé" required>
+        <form method="POST" id="scheduleForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Mã suất</label>
+                    <input type="text" name="MaSuat" pattern="SC\d{3}" title="VD: SC001" required>
+                </div>
+                <div class="form-group">
+                    <label>Phim</label>
+                    <select name="MaPhim" required>
+                        <option value="">-- Chọn phim --</option>
+                        <?php foreach ($movies as $phim): ?>
+                            <option value="<?= htmlspecialchars($phim['MAPHIM']) ?>">
+                                <?= htmlspecialchars($phim['TENPHIM']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Phòng chiếu</label>
+                    <select name="MaPhong" required>
+                        <option value="">-- Chọn phòng --</option>
+                        <?php foreach ($rooms as $room): ?>
+                            <option value="<?= htmlspecialchars($room['MAPHONG']) ?>">
+                                <?= htmlspecialchars($room['TENPHONG']) ?> (<?= $room['SOLUONGGHE'] ?> ghế)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Thời gian bắt đầu</label>
+                    <input type="datetime-local" name="ThoiGianBatDau" required>
+                </div>
+                <div class="form-group">
+                    <label>Thời gian kết thúc</label>
+                    <input type="datetime-local" name="ThoiGianKetThuc" required>
+                </div>
+                <div class="form-group">
+                    <label>Giá vé (VNĐ)</label>
+                    <input type="number" name="GiaVe" min="50000" step="10000" required>
+                </div>
             </div>
             <button type="submit" name="add_schedule" class="btn">Thêm suất chiếu</button>
         </form>
@@ -75,40 +113,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Danh sách suất chiếu -->
     <div class="admin-section">
         <h2>Danh sách suất chiếu</h2>
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Mã</th>
-                    <th>Phim</th>
-                    <th>Phòng</th>
-                    <th>Bắt đầu</th>
-                    <th>Kết thúc</th>
-                    <th>Giá vé</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($schedules as $sc): ?>
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
                     <tr>
-                        <td><?= $sc['MASUAT'] ?></td>
-                        <td><?= $sc['TENPHIM'] ?></td>
-                        <td><?= $sc['TENPHONG'] ?></td>
-                        <td><?= date('d/m/Y H:i', strtotime($sc['THOIGIANBATDAU'])) ?></td>
-                        <td><?= date('d/m/Y H:i', strtotime($sc['THOIGIANKETTHUC'])) ?></td>
-                        <td><?= number_format($sc['GIAVE']) ?>₫</td>
-                        <td>
-                            <form method="POST" onsubmit="return confirm('Xoá suất này?');" style="display:inline;">
-                                <input type="hidden" name="MaSuat" value="<?= $sc['MASUAT'] ?>">
-                                <button type="submit" name="delete_schedule" class="btn-delete">Xoá</button>
-                            </form>
-                        </td>
+                        <th>Mã</th>
+                        <th>Phim</th>
+                        <th>Phòng</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th>Giá vé</th>
+                        <th>Thao tác</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php foreach ($schedules as $sc): 
+                        $now = time();
+                        $startTime = strtotime($sc['THOIGIANBATDAU']);
+                        $isPast = ($now > $startTime);
+                    ?>
+                        <tr class="<?= $isPast ? 'inactive' : '' ?>">
+                            <td><?= htmlspecialchars($sc['MASUAT']) ?></td>
+                            <td><?= htmlspecialchars($sc['TENPHIM']) ?></td>
+                            <td><?= htmlspecialchars($sc['TENPHONG']) ?></td>
+                            <td class="time-cell">
+                                <?= date('d/m/Y H:i', $startTime) ?>
+                                <?= ($isPast) ? '<span class="conflict-warning"> (Đã qua)</span>' : '' ?>
+                            </td>
+                            <td class="time-cell"><?= date('d/m/Y H:i', strtotime($sc['THOIGIANKETTHUC'])) ?></td>
+                            <td><?= number_format($sc['GIAVE']) ?>₫</td>
+                            <td>
+                                <?php if (!$isPast): ?>
+                                    <form method="POST" onsubmit="return confirm('Xoá suất chiếu này?');">
+                                        <input type="hidden" name="MaSuat" value="<?= htmlspecialchars($sc['MASUAT']) ?>">
+                                        <button type="submit" name="delete_schedule" class="btn-delete">Xoá</button>
+                                    </form>
+                                <?php else: ?>
+                                    <button class="btn-disabled" disabled>Đã qua</button>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <?php include '../includes/footer.php'; ?>
+
+<script>
+// Validate thời gian
+document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+    const start = new Date(document.getElementsByName('ThoiGianBatDau')[0].value);
+    const end = new Date(document.getElementsByName('ThoiGianKetThuc')[0].value);
+    
+    if (start >= end) {
+        alert('Thời gian kết thúc phải sau thời gian bắt đầu!');
+        e.preventDefault();
+    }
+});
+</script>
 </body>
 </html>
