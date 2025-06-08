@@ -229,9 +229,9 @@ function getStats() {
  */
 function getUsers() {
     $conn = connectOracle();
-    $query = "SELECT MA_ND, TEN_DANG_NHAP, HO_TEN, VAI_TRO, EMAIL, SDT 
+    $query = "SELECT MAND, TENDANGNHAP, HOTEN, VAITRO, EMAIL, SDT 
               FROM NGUOIDUNG 
-              ORDER BY VAI_TRO, MA_ND";
+              ORDER BY VAITRO, MAND";
     
     $stid = oci_parse($conn, $query);
     oci_execute($stid);
