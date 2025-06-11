@@ -9,7 +9,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 }
 
 $movieId = $_GET['id'];
-$movie = getMovieDetails($movieId);
+$movie = getMovieById($movieId);
 
 if (!$movie) {
     header('Location: home.php?error=invalid_movie');
@@ -53,15 +53,22 @@ $upcomingSchedules = array_filter($schedules, function($schedule) use ($currentD
                 <div class="movie-meta">
                     <div class="meta-item">
                         <span class="meta-label">Thể loại:</span>
-                        <span class="meta-value"><?= htmlspecialchars($movie['TheLoai']) ?></span>
+                        <span class="meta-value"><?= htmlspecialchars($movie['THELOAI']) ?></span>
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">Thời lượng:</span>
-                        <span class="meta-value"><?= htmlspecialchars($movie['ThoiLuong']) ?> phút</span>
+                        <span class="meta-value"><?= (int)$movie['THOILUONG'] ?> phút</span>
                     </div>
                     <div class="meta-item">
-                        <span class="meta-label">Ngày phát hành:</span>
-                        <span class="meta-value"><?= date('d/m/Y', strtotime($movie['NgayPhatHanh'])) ?></span>
+                        <span class="meta-label">Trạng thái:</span>
+                        <span class="meta-value">
+                            <?= match($movie['TRANGTHAI']) {
+                                'dang_chieu' => 'Đang chiếu',
+                                'sap_chieu' => 'Sắp chiếu',
+                                'ngung_chieu' => 'Ngừng chiếu',
+                                default => $movie['TRANGTHAI']
+                            } ?>
+                        </span>
                     </div>
                 </div>
                 

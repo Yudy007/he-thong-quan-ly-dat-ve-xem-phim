@@ -24,7 +24,9 @@ if ($phimId) {
         exit;
     }
 }
-
+if (empty($suatChieus)) {
+    echo '<div class="alert error">Phim này chưa có suất chiếu</div>';
+}
 // Xử lý khi có chọn suất chiếu
 if ($suatChieuId) {
     // Kiểm tra suất chiếu có thuộc phim đã chọn không
@@ -37,7 +39,7 @@ if ($suatChieuId) {
     }
     
     if (!$validSchedule) {
-        header("Location: booking.php?phim=" . urlencode($phimId) . "&error=invalid_schedule");
+        header("Location: booking.php?phim=" . urlencode($phimId) . "&suat=" . urlencode($suatChieuId));
         exit;
     }
     

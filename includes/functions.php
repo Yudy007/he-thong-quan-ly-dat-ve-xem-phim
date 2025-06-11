@@ -16,27 +16,34 @@ function loginUser($username, $password) {
 
 function registerUser($data) {
     $conn = connectOracle();
+
+    $data['MAND'] = substr(uniqid("ND"), 0, 10); // Đảm bảo đúng độ dài 10 ký tự
+    $data['MATKHAU'] = md5($data['MATKHAU']);   // Mã hóa mật khẩu
+
     $stmt = oci_parse($conn, 
-        "INSERT INTO NGUOIDUNG (MAND, TENDANGNHAP, MATKHAU, HOTEN, VAITRO, EMAIL, SDT)
-         VALUES (:ma_nd, :username, :password, :fullname, 'khachhang', :email, :sdt)");
-    
-    $data['ma_nd'] = uniqid("ND");
-    $data['password'] = md5($data['MAT_KHAU']); // Sửa: lấy từ MAT_KHAU
-    
-    oci_bind_by_name($stmt, ':ma_nd', $data['ma_nd']);
+    "INSERT INTO NGUOIDUNG (MAND, TENDANGNHAP, MATKHAU, HOTEN, VAITRO, EMAIL, SDT)
+     VALUES (:mand, :username, :password, :fullname, :vaitro, :email, :sdt)");
+
+    oci_bind_by_name($stmt, ':mand', $data['MAND']);
     oci_bind_by_name($stmt, ':username', $data['TENDANGNHAP']);
-    oci_bind_by_name($stmt, ':password', $data['password']);
+    oci_bind_by_name($stmt, ':password', $data['MATKHAU']);
     oci_bind_by_name($stmt, ':fullname', $data['HOTEN']);
+    oci_bind_by_name($stmt, ':vaitro', $data['VAITRO']);
     oci_bind_by_name($stmt, ':email', $data['EMAIL']);
     oci_bind_by_name($stmt, ':sdt', $data['SDT']);
-    
+
     $result = oci_execute($stmt);
     if ($result) {
-        oci_commit($conn); // THÊM COMMIT
+        oci_commit($conn);
+    } else {
+        $e = oci_error($stmt);
+        error_log($e['message']);
     }
+
     oci_close($conn);
     return $result;
 }
+
 
 function getUsers() {
     return fetchAll("SELECT * FROM NGUOIDUNG ORDER BY VAITRO, MAND");
@@ -82,6 +89,9 @@ function deleteUser($ma_nd) {
  * QUẢN LÝ PHIM
  * ========================= */
 
+ function getMovieById($maPhim) {
+    return fetchSingle("SELECT * FROM PHIM WHERE MAPHIM = :ma_phim", [':ma_phim' => $maPhim]);
+}
 function getAllMovies($status = null) {
     $sql = "SELECT * FROM PHIM";
     $params = [];
@@ -101,18 +111,31 @@ function getTenPhimById($maPhim) {
 }
 
 function insertMovie($data) {
-    return executeQuery(
+    $conn = connectOracle();
+
+    $stmt = oci_parse($conn, 
         "INSERT INTO PHIM (MAPHIM, TENPHIM, THELOAI, THOILUONG, MOTA, TRANGTHAI)
-         VALUES (:ma, :ten, :tl, :thoiluong, :mota, :tt)", 
-        [
-            ':ma' => $data['MaPhim'],
-            ':ten' => $data['TenPhim'],
-            ':tl' => $data['TheLoai'],
-            ':thoiluong' => $data['ThoiLuong'],
-            ':mota' => $data['MoTa'],
-            ':tt' => $data['TrangThai']
-        ]
-    );
+         VALUES (:ma, :ten, :tl, :thoiluong, :mota, :tt)");
+
+    oci_bind_by_name($stmt, ':ma', $data['MaPhim']);
+    oci_bind_by_name($stmt, ':ten', $data['TenPhim']);
+    oci_bind_by_name($stmt, ':tl', $data['TheLoai']);
+    $thoiluong = (int) $data['ThoiLuong'];
+    oci_bind_by_name($stmt, ':thoiluong', $thoiluong);
+    oci_bind_by_name($stmt, ':mota', $data['MoTa']);
+    oci_bind_by_name($stmt, ':tt', $data['TrangThai']);
+
+    $result = oci_execute($stmt);
+    if ($result) {
+        oci_commit($conn);
+    } else {
+        $e = oci_error($stmt);
+        error_log("SQL Error (insertMovie): " . $e['message']);
+        oci_rollback($conn);
+    }
+
+    oci_close($conn);
+    return $result;
 }
 
 function updateMovie($data) {
@@ -123,7 +146,7 @@ function updateMovie($data) {
             ':ma' => $data['MaPhim'],
             ':ten' => $data['TenPhim'],
             ':tl' => $data['TheLoai'],
-            ':thoiluong' => $data['ThoiLuong'],
+            ':thoiluong' => (int) $data['ThoiLuong'],
             ':mota' => $data['MoTa'],
             ':tt' => $data['TrangThai']
         ]
@@ -154,19 +177,32 @@ function getSchedules($movieId = null) {
 }
 
 function insertSchedule($data) {
-    return executeQuery(
+    $conn = connectOracle();
+
+    $stmt = oci_parse($conn, 
         "INSERT INTO SUATCHIEU (MASUAT, MAPHIM, MAPHONG, THOIGIANBATDAU, THOIGIANKETTHUC, GIAVE)
          VALUES (:MaSuat, :MaPhim, :MaPhong, TO_DATE(:BatDau, 'YYYY-MM-DD\"T\"HH24:MI'), 
-                TO_DATE(:KetThuc, 'YYYY-MM-DD\"T\"HH24:MI'), :GiaVe)",
-        [
-            ':MaSuat' => $data['MaSuat'],
-            ':MaPhim' => $data['MaPhim'],
-            ':MaPhong' => $data['MaPhong'],
-            ':BatDau' => $data['ThoiGianBatDau'],
-            ':KetThuc' => $data['ThoiGianKetThuc'],
-            ':GiaVe' => $data['GiaVe']
-        ]
-    );
+                 TO_DATE(:KetThuc, 'YYYY-MM-DD\"T\"HH24:MI'), :GiaVe)");
+
+    oci_bind_by_name($stmt, ':MaSuat', $data['MaSuat']);
+    oci_bind_by_name($stmt, ':MaPhim', $data['MaPhim']);
+    oci_bind_by_name($stmt, ':MaPhong', $data['MaPhong']);
+    oci_bind_by_name($stmt, ':BatDau', $data['ThoiGianBatDau']);
+    oci_bind_by_name($stmt, ':KetThuc', $data['ThoiGianKetThuc']);
+    $giave = (int) $data['GiaVe'];
+    oci_bind_by_name($stmt, ':GiaVe', $giave);
+
+    $result = oci_execute($stmt);
+    if ($result) {
+        oci_commit($conn);
+    } else {
+        $e = oci_error($stmt);
+        error_log("SQL Error (insertSchedule): " . $e['message']);
+        oci_rollback($conn);
+    }
+
+    oci_close($conn);
+    return $result;
 }
 
 function deleteSchedule($maSuat) {
@@ -377,10 +413,16 @@ function executeQuery($sql, $params = []) {
         oci_bind_by_name($stmt, $key, $value);
     }
     
-    $result = oci_execute($stmt);
+    $result = oci_execute($stmt, OCI_DEFAULT); // Bắt đầu transaction
+    
     if ($result) {
-        oci_commit($conn);
+        oci_commit($conn); // Commit thay đổi
+    } else {
+        $error = oci_error($stmt);
+        error_log("SQL Error: " . $error['message']);
+        oci_rollback($conn); // Rollback nếu lỗi
     }
+    
     oci_close($conn);
     return $result;
 }

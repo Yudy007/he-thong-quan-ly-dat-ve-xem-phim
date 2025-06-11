@@ -8,13 +8,13 @@ $users = getUsers();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'TENDANGNHAP' => $_POST['TenDangNhap'],
-        'MAT_KHAU' => $_POST['MatKhau'], // SỬA: đổi key thành MAT_KHAU
-        'HOTEN' => $_POST['HoTen'],
-        'VAITRO' => $_POST['VaiTro'],
-        'EMAIL' => $_POST['Email'],
-        'SDT' => $_POST['SDT']
-    ];
+            'TENDANGNHAP' => $_POST['TenDangNhap'],
+            'MATKHAU' => $_POST['MatKhau'],
+            'HOTEN' => $_POST['HoTen'],
+            'VAITRO' => $_POST['VaiTro'],
+            'EMAIL' => $_POST['Email'],
+            'SDT' => $_POST['SDT']
+        ];
 
     if (isset($_POST['add_user'])) {
         registerUser($data);

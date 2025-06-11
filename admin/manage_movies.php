@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         insertMovie($data);
     } elseif (isset($_POST['delete_movie'])) {
         deleteMovie($_POST['MaPhim']);
-    } elseif (isset($_POST['update_movie'])) { // Thêm phần xử lý cập nhật nếu cần
+    } elseif (isset($_POST['update_movie'])) {
         updateMovie($data);
     }
 

@@ -13,14 +13,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         // Tạo dữ liệu
         $data = [
-            'TenDangNhap' => $username,
-            'MatKhau' => password_hash($password, PASSWORD_DEFAULT),
-            'HoTen' => $hoTen,
-            'VaiTro' => 'khachhang'
+            'TENDANGNHAP' => $username,
+            'MATKHAU' => $password,
+            'HOTEN' => $hoTen,
+            'VAITRO' => 'khachhang',
+            'EMAIL' => null,
+            'SDT' => null
         ];
 
         // Gọi hàm thêm user
-        $success = insertUser($data);
+        $success = registerUser($data);
 
         if ($success) {
             $_SESSION['success'] = "Đăng ký thành công! Vui lòng đăng nhập.";

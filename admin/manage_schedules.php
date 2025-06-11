@@ -161,13 +161,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script>
 // Validate thời gian
 document.getElementById('scheduleForm').addEventListener('submit', function(e) {
-    const start = new Date(document.getElementsByName('ThoiGianBatDau')[0].value);
-    const end = new Date(document.getElementsByName('ThoiGianKetThuc')[0].value);
+    const startInput = document.getElementsByName('ThoiGianBatDau')[0];
+    const endInput = document.getElementsByName('ThoiGianKetThuc')[0];
+    
+    const start = new Date(startInput.value);
+    const end = new Date(endInput.value);
     
     if (start >= end) {
         alert('Thời gian kết thúc phải sau thời gian bắt đầu!');
         e.preventDefault();
+        return false;
     }
+    
+    // Kiểm tra thời gian trong quá khứ
+    const now = new Date();
+    if (start < now) {
+        alert('Không thể tạo suất chiếu trong quá khứ!');
+        e.preventDefault();
+        return false;
+    }
+    
+    return true;
 });
 </script>
 </body>
