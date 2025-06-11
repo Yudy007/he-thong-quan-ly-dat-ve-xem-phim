@@ -376,3 +376,61 @@ function executeQuery($sql, $params = []) {
     oci_close($conn);
     return $result;
 }
+
+function getScheduleDetails($scheduleId) {
+    $conn = connectOracle();
+    $stmt = oci_parse($conn, 
+        "SELECT sc.*, p.TENPHIM, pc.TENPHONG 
+         FROM SUATCHIEU sc
+         JOIN PHIM p ON sc.MAPHIM = p.MAPHIM
+         JOIN PHONGCHIEU pc ON sc.MAPHONG = pc.MAPHONG
+         WHERE sc.MASUAT = :masuat");
+    oci_bind_by_name($stmt, ':masuat', $scheduleId);
+    oci_execute($stmt);
+    return oci_fetch_assoc($stmt);
+}
+
+function getSeatsForSchedule($scheduleId) {
+    $conn = connectOracle();
+    $stmt = oci_parse($conn,
+        "SELECT g.*, 
+                CASE WHEN v.MAVE IS NOT NULL THEN 'occupied' ELSE 'available' END AS TRANGTHAI
+         FROM GHE g
+         LEFT JOIN VE v ON g.MAGHE = v.MAGHE AND v.MASUAT = :masuat
+         WHERE g.MAPHONG = (SELECT MAPHONG FROM SUATCHIEU WHERE MASUAT = :masuat)
+         ORDER BY g.SOGHE");
+    oci_bind_by_name($stmt, ':masuat', $scheduleId);
+    oci_execute($stmt);
+    
+    $seats = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $seats[] = $row;
+    }
+    return $seats;
+}
+
+function updateSeatStatus($seatId, $status, $scheduleId) {
+    $conn = connectOracle();
+    
+    // Nếu đánh dấu là occupied, tạo vé mới
+    if ($status === 'occupied') {
+        $stmt = oci_parse($conn,
+            "INSERT INTO VE (MAVE, MASUAT, MAGHE, THOIGIANDAT, TRANGTHAI)
+             VALUES (:mave, :masuat, :maghe, SYSDATE, 'da_dat')");
+        $maVe = uniqid("V");
+        oci_bind_by_name($stmt, ':mave', $maVe);
+        oci_bind_by_name($stmt, ':masuat', $scheduleId);
+        oci_bind_by_name($stmt, ':maghe', $seatId);
+        oci_execute($stmt);
+    } 
+    // Nếu chuyển từ occupied sang trạng thái khác, xóa vé
+    else {
+        $stmt = oci_parse($conn,
+            "DELETE FROM VE WHERE MAGHE = :maghe AND MASUAT = :masuat");
+        oci_bind_by_name($stmt, ':maghe', $seatId);
+        oci_bind_by_name($stmt, ':masuat', $scheduleId);
+        oci_execute($stmt);
+    }
+    
+    return true;
+}

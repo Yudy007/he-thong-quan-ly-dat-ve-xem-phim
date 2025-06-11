@@ -4,12 +4,12 @@ function connectOracle() {
     $db_pass = 'phim123';
     $db_host = 'localhost:1521/ORCL';
     
-    $conn = oci_connect($db_user, $db_pass, $db_host, 'AL32UTF8'); // Thêm charset
+    $conn = oci_connect($db_user, $db_pass, $db_host, 'AL32UTF8');
     
     if (!$conn) {
         $e = oci_error();
-        error_log("Oracle Connect Error: " . $e['message']); // Ghi log thay vì echo
-        throw new Exception("Database connection failed"); // Ném exception để xử lý tập trung
+        error_log("Oracle Connect Error: " . $e['message']);
+        throw new Exception("Database connection failed");
     }
     
     return $conn;

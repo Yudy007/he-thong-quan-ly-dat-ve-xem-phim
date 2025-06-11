@@ -3,76 +3,124 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 checkRole('khachhang');
 
-if (!isset($_GET['id'])) {
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header('Location: home.php');
     exit;
 }
 
 $movieId = $_GET['id'];
 $movie = getMovieDetails($movieId);
+
+if (!$movie) {
+    header('Location: home.php?error=invalid_movie');
+    exit;
+}
+
 $schedules = getSchedules($movieId);
+$currentDate = date('Y-m-d');
+$upcomingSchedules = array_filter($schedules, function($schedule) use ($currentDate) {
+    return date('Y-m-d', strtotime($schedule['ThoiGianBatDau'])) >= $currentDate;
+});
 ?>
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($movie['TenPhim']) ?> - Chi tiết phim</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/movie-detail.css">
 </head>
 <body>
     <?php include '../includes/header.php'; ?>
     
     <div class="container">
-        <div class="movie-detail">
+        <div class="movie-detail-container">
             <div class="movie-poster">
-                <img src="../assets/images/posters/<?= htmlspecialchars($movie['HinhAnh']) ?>" alt="<?= htmlspecialchars($movie['TenPhim']) ?>">
+                <img src="../assets/images/posters/<?= htmlspecialchars($movie['HinhAnh'] ?? 'default-poster.jpg') ?>" 
+                     alt="<?= htmlspecialchars($movie['TenPhim']) ?>"
+                     class="poster-image">
+                <?php if ($movie['DanhGia'] > 0): ?>
+                    <div class="rating-badge">
+                        <?= number_format($movie['DanhGia'], 1) ?>/10
+                    </div>
+                <?php endif; ?>
             </div>
             
-            <div class="movie-info">
-                <h1><?= htmlspecialchars($movie['TenPhim']) ?></h1>
+            <div class="movie-content">
+                <h1 class="movie-title"><?= htmlspecialchars($movie['TenPhim']) ?></h1>
                 
                 <div class="movie-meta">
-                    <span><strong>Thể loại:</strong> <?= htmlspecialchars($movie['TheLoai']) ?></span>
-                    <span><strong>Thời lượng:</strong> <?= htmlspecialchars($movie['ThoiLuong']) ?> phút</span>
-                    <span><strong>Đánh giá:</strong> <?= htmlspecialchars($movie['DanhGia']) ?>/10</span>
+                    <div class="meta-item">
+                        <span class="meta-label">Thể loại:</span>
+                        <span class="meta-value"><?= htmlspecialchars($movie['TheLoai']) ?></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Thời lượng:</span>
+                        <span class="meta-value"><?= htmlspecialchars($movie['ThoiLuong']) ?> phút</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Ngày phát hành:</span>
+                        <span class="meta-value"><?= date('d/m/Y', strtotime($movie['NgayPhatHanh'])) ?></span>
+                    </div>
                 </div>
                 
-                <div class="movie-description">
-                    <h3>Nội dung phim</h3>
-                    <p><?= htmlspecialchars($movie['MoTa']) ?></p>
+                <div class="section">
+                    <h3 class="section-title">Nội dung phim</h3>
+                    <p class="movie-description"><?= nl2br(htmlspecialchars($movie['MoTa'])) ?></p>
                 </div>
                 
-                <div class="movie-cast">
-                    <h3>Diễn viên</h3>
-                    <p><?= htmlspecialchars($movie['DienVien']) ?></p>
+                <div class="section">
+                    <h3 class="section-title">Diễn viên</h3>
+                    <p class="movie-cast"><?= htmlspecialchars($movie['DienVien']) ?></p>
                 </div>
             </div>
         </div>
         
         <div class="schedule-section">
-            <h2>Lịch chiếu</h2>
+            <h2 class="section-heading">Lịch chiếu</h2>
             
-            <?php if (empty($schedules)): ?>
-                <div class="alert info">
-                    <p>Hiện chưa có suất chiếu cho phim này.</p>
+            <?php if (empty($upcomingSchedules)): ?>
+                <div class="empty-state">
+                    <img src="../assets/images/empty-schedule.svg" alt="No schedules" class="empty-icon">
+                    <p class="empty-message">Hiện chưa có suất chiếu cho phim này</p>
+                    <a href="movies.php" class="btn btn-primary">Xem phim khác</a>
                 </div>
             <?php else: ?>
-                <div class="schedule-list">
-                    <?php foreach ($schedules as $schedule): ?>
-                        <div class="schedule-card">
-                            <div class="schedule-time">
-                                <div class="schedule-date"><?= date('d/m/Y', strtotime($schedule['ThoiGianBatDau'])) ?></div>
-                                <div class="schedule-hour"><?= date('H:i', strtotime($schedule['ThoiGianBatDau'])) ?></div>
-                            </div>
+                <div class="schedule-tabs">
+                    <?php 
+                    $groupedSchedules = [];
+                    foreach ($upcomingSchedules as $schedule) {
+                        $date = date('Y-m-d', strtotime($schedule['ThoiGianBatDau']));
+                        $groupedSchedules[$date][] = $schedule;
+                    }
+                    ?>
+                    
+                    <?php foreach ($groupedSchedules as $date => $dateSchedules): ?>
+                        <div class="schedule-day">
+                            <h3 class="schedule-date"><?= date('l, d/m/Y', strtotime($date)) ?></h3>
                             
-                            <div class="schedule-info">
-                                <div class="schedule-room">Phòng <?= htmlspecialchars($schedule['MaPhong']) ?></div>
-                                <div class="schedule-price"><?= number_format($schedule['GiaVe'], 0, ',', '.') ?> VNĐ</div>
-                            </div>
-                            
-                            <div class="schedule-action">
-                                <a href="booking.php?schedule_id=<?= $schedule['MaSuat'] ?>" class="btn">Đặt vé</a>
+                            <div class="schedule-grid">
+                                <?php foreach ($dateSchedules as $schedule): ?>
+                                    <div class="schedule-card">
+                                        <div class="schedule-time">
+                                            <?= date('H:i', strtotime($schedule['ThoiGianBatDau'])) ?>
+                                            <small><?= date('H:i', strtotime($schedule['ThoiGianKetThuc'])) ?></small>
+                                        </div>
+                                        <div class="schedule-room">
+                                            <span>Phòng</span>
+                                            <strong><?= htmlspecialchars($schedule['TenPhong']) ?></strong>
+                                        </div>
+                                        <div class="schedule-price">
+                                            <?= number_format($schedule['GiaVe'], 0, ',', '.') ?> VNĐ
+                                        </div>
+                                        <a href="booking.php?schedule_id=<?= $schedule['MaSuat'] ?>" 
+                                           class="btn btn-book">
+                                           Đặt vé
+                                        </a>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>

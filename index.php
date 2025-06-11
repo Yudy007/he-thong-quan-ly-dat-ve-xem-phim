@@ -1,79 +1,96 @@
 <?php
 require_once 'includes/functions.php';
-$movies = getAllMovies();
+require_once 'includes/auth.php';
+
+// Lấy danh sách phim với filter (nếu có)
+$filter = $_GET['filter'] ?? 'dang_chieu';
+$validFilters = ['dang_chieu', 'sap_chieu', 'tat_ca'];
+$filter = in_array($filter, $validFilters) ? $filter : 'dang_chieu';
+
+$movies = getAllMovies($filter === 'tat_ca' ? null : $filter);
 ?>
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Trang chủ Movie Booking System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách phim - Movie Booking System</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        body {
-            font-family: 'Times New Roman', Times, serif;
-        }
-
-        .movie-poster {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 0.8rem;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background-color: #007bff;
-            color: white;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-        }
-
-        .btn:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/movies.css">
 </head>
 <body>
 
 <?php include 'includes/header.php'; ?>
 
 <div class="container">
-    <h1 class="page-title">Danh sách phim</h1>
+    <div class="page-header">
+        <h1 class="page-title">Danh sách phim</h1>
+        
+        <div class="filter-tabs">
+            <a href="?filter=dang_chieu" class="filter-tab <?= $filter === 'dang_chieu' ? 'active' : '' ?>">
+                Đang chiếu
+            </a>
+            <a href="?filter=sap_chieu" class="filter-tab <?= $filter === 'sap_chieu' ? 'active' : '' ?>">
+                Sắp chiếu
+            </a>
+            <a href="?filter=tat_ca" class="filter-tab <?= $filter === 'tat_ca' ? 'active' : '' ?>">
+                Tất cả phim
+            </a>
+        </div>
+    </div>
 
-    <div class="movie-list">
-        <?php if (empty($movies)): ?>
-            <p>Không có phim nào được hiển thị.</p>
-        <?php else: ?>
+    <?php if (empty($movies)): ?>
+        <div class="empty-state">
+            <img src="assets/images/no-movies.svg" alt="Không có phim" class="empty-icon">
+            <p class="empty-message">Hiện không có phim <?= $filter === 'dang_chieu' ? 'đang chiếu' : 'sắp chiếu' ?></p>
+            <?php if ($filter !== 'tat_ca'): ?>
+                <a href="?filter=tat_ca" class="btn btn-outline">Xem tất cả phim</a>
+            <?php endif; ?>
+        </div>
+    <?php else: ?>
+        <div class="movie-grid">
             <?php foreach ($movies as $movie): ?>
                 <div class="movie-card">
-                    <?php if (!empty($movie['ANH'])): ?>
-                        <img src="<?= htmlspecialchars($movie['ANH']) ?>" alt="Ảnh phim" class="movie-poster">
-                    <?php else: ?>
-                        <img src="assets/images/default-movie.jpg" alt="Ảnh mặc định" class="movie-poster">
-                    <?php endif; ?>
+                    <div class="movie-poster-container">
+                        <img src="<?= !empty($movie['ANH']) ? htmlspecialchars($movie['ANH']) : 'assets/images/default-movie.jpg' ?>" 
+                             alt="<?= htmlspecialchars($movie['TENPHIM']) ?>" 
+                             class="movie-poster"
+                             loading="lazy">
+                        <?php if ($movie['TRANGTHAI'] === 'sap_chieu'): ?>
+                            <div class="coming-soon-badge">Sắp chiếu</div>
+                        <?php endif; ?>
+                    </div>
 
-                    <h3><?= htmlspecialchars($movie['TENPHIM']) ?></h3>
-                    <p><strong>Thể loại:</strong> <?= htmlspecialchars($movie['THELOAI']) ?></p>
-                    <p><strong>Thời lượng:</strong> <?= $movie['THOILUONG'] ?> phút</p>
-                    <p><strong>Trạng thái:</strong> 
-                        <span class="badge <?= $movie['TRANGTHAI'] ?>">
-                            <?= $movie['TRANGTHAI'] == 'dang_chieu' ? 'Đang chiếu' : 
-                                ($movie['TRANGTHAI'] == 'sap_chieu' ? 'Sắp chiếu' : 'Ngừng chiếu') ?>
-                        </span>
-                    </p>
-                    <?php if ($movie['TRANGTHAI'] != 'ngung_chieu'): ?>
-                        <a href="customer/booking.php?phim=<?= $movie['MAPHIM'] ?>" class="btn">Đặt vé</a>
+                    <div class="movie-details">
+                        <h3 class="movie-title"><?= htmlspecialchars($movie['TENPHIM']) ?></h3>
+                        
+                        <div class="movie-meta">
+                            <span class="meta-item">
+                                <i class="icon icon-theloai"></i>
+                                <?= htmlspecialchars($movie['THELOAI']) ?>
+                            </span>
+                            <span class="meta-item">
+                                <i class="icon icon-time"></i>
+                                <?= $movie['THOILUONG'] ?> phút
+                            </span>
+                        </div>
 
-                    <?php endif; ?>
+                        <div class="movie-actions">
+                            <a href="movie_detail.php?id=<?= $movie['MAPHIM'] ?>" class="btn btn-outline">
+                                Chi tiết
+                            </a>
+                            <?php if ($movie['TRANGTHAI'] === 'dang_chieu'): ?>
+                                <a href="booking.php?phim=<?= $movie['MAPHIM'] ?>" class="btn btn-primary">
+                                    Đặt vé
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
             <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
+        </div>
+    <?php endif; ?>
 </div>
 
 <?php include 'includes/footer.php'; ?>
