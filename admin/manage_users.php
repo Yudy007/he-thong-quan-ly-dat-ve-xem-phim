@@ -8,8 +8,8 @@ $users = getUsers();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'TENDANGNHAP' => $_POST['TenDangNhap'], // Sửa thành key viết hoa
-        'MAT_KHAU' => $_POST['MatKhau'], // Key phải khớp với hàm insertUser
+        'TENDANGNHAP' => $_POST['TenDangNhap'],
+        'MAT_KHAU' => $_POST['MatKhau'], // SỬA: đổi key thành MAT_KHAU
         'HOTEN' => $_POST['HoTen'],
         'VAITRO' => $_POST['VaiTro'],
         'EMAIL' => $_POST['Email'],

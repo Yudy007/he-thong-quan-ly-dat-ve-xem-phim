@@ -21,7 +21,7 @@ function registerUser($data) {
          VALUES (:ma_nd, :username, :password, :fullname, 'khachhang', :email, :sdt)");
     
     $data['ma_nd'] = uniqid("ND");
-    $data['password'] = md5($data['MAT_KHAU']);
+    $data['password'] = md5($data['MAT_KHAU']); // Sửa: lấy từ MAT_KHAU
     
     oci_bind_by_name($stmt, ':ma_nd', $data['ma_nd']);
     oci_bind_by_name($stmt, ':username', $data['TENDANGNHAP']);
@@ -30,8 +30,12 @@ function registerUser($data) {
     oci_bind_by_name($stmt, ':email', $data['EMAIL']);
     oci_bind_by_name($stmt, ':sdt', $data['SDT']);
     
-    return oci_execute($stmt);
-    oci_commit($conn);
+    $result = oci_execute($stmt);
+    if ($result) {
+        oci_commit($conn); // THÊM COMMIT
+    }
+    oci_close($conn);
+    return $result;
 }
 
 function getUsers() {
@@ -374,6 +378,9 @@ function executeQuery($sql, $params = []) {
     }
     
     $result = oci_execute($stmt);
+    if ($result) {
+        oci_commit($conn);
+    }
     oci_close($conn);
     return $result;
 }

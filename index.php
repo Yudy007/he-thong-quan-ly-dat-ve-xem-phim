@@ -53,14 +53,15 @@ $movies = getAllMovies($filter === 'tat_ca' ? null : $filter);
             <?php foreach ($movies as $movie): ?>
                 <div class="movie-card">
                     <div class="movie-poster-container">
-                        <img src="<?= !empty($movie['ANH']) ? htmlspecialchars($movie['ANH']) : 'assets/images/default-movie.jpg' ?>" 
-                             alt="<?= htmlspecialchars($movie['TENPHIM']) ?>" 
-                             class="movie-poster"
-                             loading="lazy">
-                        <?php if ($movie['TRANGTHAI'] === 'sap_chieu'): ?>
-                            <div class="coming-soon-badge">Sắp chiếu</div>
-                        <?php endif; ?>
-                    </div>
+                    <img src="<?= $base_url ?>/assets/images/<?= htmlspecialchars($movie['MAPHIM']) ?>.jpg" 
+                        alt="<?= htmlspecialchars($movie['TENPHIM']) ?>" 
+                        class="movie-poster"
+                        loading="lazy"
+                        onerror="this.onerror=null;this.src='<?= $base_url ?>/assets/images/default-movie.jpg'">
+                    <?php if ($movie['TRANGTHAI'] === 'sap_chieu'): ?>
+                        <div class="coming-soon-badge">Sắp chiếu</div>
+                    <?php endif; ?>
+                </div>
 
                     <div class="movie-details">
                         <h3 class="movie-title"><?= htmlspecialchars($movie['TENPHIM']) ?></h3>
