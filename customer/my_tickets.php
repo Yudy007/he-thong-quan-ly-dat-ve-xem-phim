@@ -22,10 +22,10 @@ function formatStatus($status) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vé đã đặt - Hệ thống Rạp phim</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
-<?php include 'includes/header.php'; ?>
+<?php include '../includes/header.php'; ?>
 
 <div class="container">
     <h2 class="page-title">Danh sách vé đã đặt</h2>
@@ -71,6 +71,6 @@ function formatStatus($status) {
     <?php endif; ?>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>
 </body>
 </html>

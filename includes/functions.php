@@ -31,6 +31,7 @@ function registerUser($data) {
     oci_bind_by_name($stmt, ':sdt', $data['SDT']);
     
     return oci_execute($stmt);
+    oci_commit($conn);
 }
 
 function getUsers() {

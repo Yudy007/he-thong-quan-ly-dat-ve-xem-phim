@@ -1,7 +1,7 @@
 <?php
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
-
+$base_url = '/he-thong-quan-ly-dat-ve-xem-phim';
 // Kiểm tra quyền khách hàng
 checkRole('khachhang');
 
@@ -14,25 +14,7 @@ $myTickets = getMyTickets($_SESSION['MaND']);
 <head>
     <meta charset="UTF-8">
     <title>Trang chủ khách hàng</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .welcome-section { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 15px; margin: 20px 0; text-align: center; }
-        .quick-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
-        .stat-card { background: linear-gradient(135deg, #ff6b6b, #ee5a24); color: white; padding: 20px; border-radius: 10px; text-align: center; }
-        .stat-number { font-size: 2em; font-weight: bold; }
-        .movie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 20px 0; }
-        .movie-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.3s; }
-        .movie-card:hover { transform: translateY(-5px); }
-        .movie-card img { width: 100%; height: 400px; object-fit: cover; }
-        .movie-card-content { padding: 20px; }
-        .movie-card h3 { color: #333; margin-bottom: 10px; font-size: 1.2em; }
-        .movie-card p { color: #666; margin-bottom: 15px; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 25px; display: inline-block; transition: all 0.3s; }
-        .btn:hover { background: #0056b3; transform: scale(1.05); }
-        .btn-success { background: #28a745; }
-        .btn-success:hover { background: #218838; }
-        .section-title { color: #333; border-bottom: 3px solid #007bff; padding-bottom: 10px; margin: 30px 0 20px 0; }
-    </style>
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
     <?php include '../includes/header.php'; ?>

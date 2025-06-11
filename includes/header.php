@@ -16,6 +16,7 @@ $hoTen = isset($_SESSION['hoTen']) ? htmlspecialchars($_SESSION['hoTen'], ENT_QU
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
     <header class="header">
@@ -43,16 +44,16 @@ $hoTen = isset($_SESSION['hoTen']) ? htmlspecialchars($_SESSION['hoTen'], ENT_QU
                             <a href="<?= $base_url ?>/customer/my_tickets.php" class="nav-link">Vé của tôi</a>
                         </li>
                     <?php elseif ($vaiTro === 'nhanvien'): ?>
-                        <li class="nav-item dropdown">
-                            <a href="#" class="nav-link dropdown-toggle">Quản lý vé</a>
-                            <div class="dropdown-menu">
-                                <a href="<?= $base_url ?>/staff/ticket_checker.php" class="dropdown-item">Kiểm tra vé</a>
-                                <a href="<?= $base_url ?>/staff/seat_adjust.php" class="dropdown-item">Điều chỉnh ghế</a>
-                            </div>
-                        </li>
                         <li class="nav-item">
                             <a href="<?= $base_url ?>/staff/dashboard.php" class="nav-link">Bảng điều khiển</a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle">Quản lý vé</a>
+                            <div class="dropdown-menu">
+                                <a href="<?= $base_url ?>/staff/seat_adjust.php" class="dropdown-item">Điều chỉnh ghế</a>
+                            </div>
+                        </li>
+                        
                     <?php elseif ($vaiTro === 'admin'): ?>
                         <li class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle">Quản lý</a>
@@ -76,7 +77,6 @@ $hoTen = isset($_SESSION['hoTen']) ? htmlspecialchars($_SESSION['hoTen'], ENT_QU
                                 <span class="user-role">(<?= htmlspecialchars($vaiTro) ?>)</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right">
-                                <a href="<?= $base_url ?>/profile.php" class="dropdown-item">Hồ sơ</a>
                                 <a href="<?= $base_url ?>/logout.php" class="dropdown-item">Đăng xuất</a>
                             </div>
                         </li>
@@ -94,3 +94,4 @@ $hoTen = isset($_SESSION['hoTen']) ? htmlspecialchars($_SESSION['hoTen'], ENT_QU
     </header>
 </body>
 </html>
+

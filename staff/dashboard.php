@@ -3,7 +3,7 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/db_connect.php'; // Thêm dòng này để đảm bảo kết nối DB
 checkRole('nhanvien');
-
+$base_url = '/he-thong-quan-ly-dat-ve-xem-phim';
 // Lấy thông tin người dùng hiện tại
 $currentUser = currentUser();
 ?>
@@ -13,107 +13,7 @@ $currentUser = currentUser();
 <head>
     <meta charset="UTF-8">
     <title>Bảng điều khiển Nhân viên</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .welcome-section { 
-            background: linear-gradient(135deg, #28a745, #20c997); 
-            color: white; 
-            padding: 25px; 
-            border-radius: 15px; 
-            margin: 20px 0; 
-            text-align: center; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .show-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 20px; 
-            margin: 20px 0; 
-        }
-        .show-card { 
-            background: white; 
-            border: 1px solid #e0e0e0; 
-            border-radius: 10px; 
-            padding: 20px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-            transition: all 0.3s ease; 
-        }
-        .show-card:hover { 
-            transform: translateY(-5px); 
-            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-        }
-        .show-card h3 { 
-            color: #007bff; 
-            margin-bottom: 15px;
-            font-size: 1.2em;
-        }
-        .show-actions { 
-            margin-top: 15px; 
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .btn { 
-            padding: 10px 15px; 
-            background: #007bff; 
-            color: white; 
-            text-decoration: none; 
-            border-radius: 5px; 
-            display: inline-block; 
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        .btn:hover { 
-            background: #0056b3; 
-            transform: translateY(-2px);
-        }
-        .btn-success { 
-            background: #28a745; 
-        }
-        .btn-success:hover { 
-            background: #218838; 
-        }
-        .info-section { 
-            background: #f8f9fa; 
-            padding: 20px; 
-            border-radius: 10px; 
-            margin: 20px 0;
-            border-left: 4px solid #17a2b8;
-        }
-        .quick-stats { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 15px; 
-            margin: 20px 0; 
-        }
-        .stat-card { 
-            background: linear-gradient(135deg, #17a2b8, #138496); 
-            color: white; 
-            padding: 20px; 
-            border-radius: 10px; 
-            text-align: center;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-        .stat-number { 
-            font-size: 2em; 
-            font-weight: bold; 
-            margin-bottom: 5px;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            color: #6c757d;
-        }
-        .empty-state-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-            color: #adb5bd;
-        }
-    </style>
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
     <?php include '../includes/header.php'; ?>
@@ -144,10 +44,6 @@ $currentUser = currentUser();
             <div class="stat-card">
                 <div class="stat-number"><?= $availableSeats ?></div>
                 <div>Ghế trống</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?= round(($soldTickets/$totalSeats)*100, 1) ?>%</div>
-                <div>Tỉ lệ lấp đầy</div>
             </div>
         </div>
 

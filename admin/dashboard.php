@@ -2,7 +2,7 @@
 require_once '../includes/auth.php'; // Thêm dòng này để kiểm tra đăng nhập
 require_once '../includes/functions.php';
 require_once '../includes/db_connect.php'; // Thêm kết nối DB
-
+$base_url = '/he-thong-quan-ly-dat-ve-xem-phim';
 checkRole('admin'); // Chỉ admin mới được truy cập
 
 if (session_status() === PHP_SESSION_NONE) session_start();
@@ -17,14 +17,7 @@ $activities = getRecentActivities(15); // Giới hạn 15 hoạt động
 <head>
     <meta charset="UTF-8">
     <title>Trang tổng quan - Quản trị</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        /* Thêm CSS tùy chỉnh */
-        .summary-box { transition: transform 0.3s; }
-        .summary-box:hover { transform: scale(1.05); }
-        .dashboard-table td:last-child { white-space: nowrap; }
-        .text-muted { color: #6c757d; }
-    </style>
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
 <?php include '../includes/header.php'; ?>

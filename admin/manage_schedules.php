@@ -3,7 +3,7 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/db_connect.php';
 checkRole('admin');
-
+$base_url = '/he-thong-quan-ly-dat-ve-xem-phim';
 $schedules = getSchedules();
 $movies = getAllMovies();
 $rooms = getRooms();
@@ -40,11 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Quản lý Suất chiếu</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .conflict-warning { color: #e74c3c; font-weight: bold; }
-        .time-cell { white-space: nowrap; }
-    </style>
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
 <?php include '../includes/header.php'; ?>

@@ -3,7 +3,7 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/db_connect.php'; // Thêm dòng này
 checkRole('admin');
-
+$base_url = '/he-thong-quan-ly-dat-ve-xem-phim';
 $users = getUsers();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -17,9 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     ];
 
     if (isset($_POST['add_user'])) {
-        insertUser($data);
+        registerUser($data);
     } elseif (isset($_POST['update_user'])) {
-        $data['MAND'] = $_POST['MaND']; // Sửa thành key viết hoa
+        $data['MAND'] = $_POST['MaND'];
         updateUser($data);
     } elseif (isset($_POST['delete_user'])) {
         deleteUser($_POST['MaND']);
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Quản lý Người dùng</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
 <?php include '../includes/header.php'; ?>

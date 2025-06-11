@@ -2,7 +2,7 @@
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 checkRole('khachhang');
-
+$base_url = '/he-thong-quan-ly-dat-ve-xem-phim';
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header('Location: home.php');
     exit;
@@ -29,8 +29,7 @@ $upcomingSchedules = array_filter($schedules, function($schedule) use ($currentD
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($movie['TenPhim']) ?> - Chi tiết phim</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/movie-detail.css">
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
     <?php include '../includes/header.php'; ?>

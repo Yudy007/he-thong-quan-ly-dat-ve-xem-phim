@@ -3,7 +3,7 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/db_connect.php'; // Thêm kết nối DB
 checkRole('khachhang');
-
+$base_url = '/he-thong-quan-ly-dat-ve-xem-phim';
 // Kiểm tra và lọc dữ liệu đầu vào
 $phimId = filter_input(INPUT_GET, 'phim', FILTER_SANITIZE_STRING);
 $suatChieuId = filter_input(INPUT_GET, 'suat', FILTER_SANITIZE_STRING);
@@ -90,43 +90,7 @@ if (isset($_SESSION['booking_success'])) {
 <head>
     <meta charset="UTF-8">
     <title>Đặt vé xem phim</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .seat-grid {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .seat {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .seat:hover {
-            background-color: #f0f0f0;
-        }
-        .seat input[type="radio"] {
-            display: none;
-        }
-        .seat input[type="radio"]:checked + span {
-            background-color: #2ecc71;
-            color: white;
-            display: block;
-            padding: 5px;
-            border-radius: 3px;
-        }
-        .screen {
-            text-align: center;
-            margin: 20px 0;
-            padding: 10px;
-            background: #333;
-            color: white;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
 

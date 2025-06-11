@@ -2,6 +2,7 @@
 require_once 'includes/functions.php';
 require_once 'includes/auth.php';
 
+$base_url = '/he-thong-quan-ly-dat-ve-xem-phim';
 // Lấy danh sách phim với filter (nếu có)
 $filter = $_GET['filter'] ?? 'dang_chieu';
 $validFilters = ['dang_chieu', 'sap_chieu', 'tat_ca'];
@@ -16,8 +17,7 @@ $movies = getAllMovies($filter === 'tat_ca' ? null : $filter);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danh sách phim - Movie Booking System</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/movies.css">
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
 
@@ -77,11 +77,13 @@ $movies = getAllMovies($filter === 'tat_ca' ? null : $filter);
                         </div>
 
                         <div class="movie-actions">
-                            <a href="movie_detail.php?id=<?= $movie['MAPHIM'] ?>" class="btn btn-outline">
+                            <a href="<?= $base_url ?>/customer/movie_detail.php?id=<?= $movie['MAPHIM'] ?>" class="btn btn-outline">
                                 Chi tiết
                             </a>
                             <?php if ($movie['TRANGTHAI'] === 'dang_chieu'): ?>
-                                <a href="booking.php?phim=<?= $movie['MAPHIM'] ?>" class="btn btn-primary">
+                                <a href="<?= $base_url ?>/customer/booking.php?phim=<?= $movie['MAPHIM'] ?>" class="btn btn-primary">
+                                Đặt vé
+                                </a>
                                     Đặt vé
                                 </a>
                             <?php endif; ?>

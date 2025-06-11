@@ -3,7 +3,7 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/db_connect.php'; // Thêm dòng này
 checkRole('admin');
-
+$base_url = '/he-thong-quan-ly-dat-ve-xem-phim';
 $movies = getAllMovies();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -34,12 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Quản lý Phim</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .status-dang_chieu { color: #2ecc71; font-weight: bold; }
-        .status-sap_chieu { color: #f39c12; font-weight: bold; }
-        .status-ngung_chieu { color: #e74c3c; font-weight: bold; }
-    </style>
+    <link rel="stylesheet" href="<?= $base_url ?>/assets/css/style.css">
 </head>
 <body>
 <?php include '../includes/header.php'; ?>
