@@ -104,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <input type="hidden" name="MaND" value="<?= $user['MAND'] ?>">
                                 <button type="submit" name="delete_user" class="btn-delete">Xoá</button>
                             </form>
-                            <a href="edit_user.php?id=<?= $user['MAND'] ?>" class="btn-edit">Sửa</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

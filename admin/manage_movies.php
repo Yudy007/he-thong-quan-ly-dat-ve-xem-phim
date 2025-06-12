@@ -115,7 +115,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             } ?>
                         </td>
                         <td class="action-buttons">
-                            <a href="edit_movie.php?id=<?= $movie['MAPHIM'] ?>" class="btn-edit">Sửa</a>
                             <form method="POST" onsubmit="return confirm('Xóa phim này?');">
                                 <input type="hidden" name="MaPhim" value="<?= $movie['MAPHIM'] ?>">
                                 <button type="submit" name="delete_movie" class="btn-delete">Xóa</button>
